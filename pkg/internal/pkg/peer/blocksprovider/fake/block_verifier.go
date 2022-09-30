@@ -4,9 +4,9 @@ package fake
 import (
 	"sync"
 
-	commona "github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/HLF-2.2/gossip/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/peer/blocksprovider"
+	commona "github.com/GwanWingYan/fabric-protos-go/common"
+	"github.com/GwanWingYan/HLF-2.2/gossip/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/peer/blocksprovider"
 )
 
 type BlockVerifier struct {

@@ -9,7 +9,7 @@ package common_test
 import (
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
 	"github.com/stretchr/testify/assert"
 )
 

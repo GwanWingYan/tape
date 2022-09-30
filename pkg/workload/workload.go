@@ -3,8 +3,8 @@ package workload
 import (
 	"fmt"
 
-	"github.com/Yunpeng-J/tape/pkg/metrics"
-	"github.com/Yunpeng-J/tape/pkg/workload/smallbank"
+	"github.com/GwanWingYan/tape/pkg/metrics"
+	"github.com/GwanWingYan/tape/pkg/workload/smallbank"
 	"github.com/spf13/viper"
 )
 

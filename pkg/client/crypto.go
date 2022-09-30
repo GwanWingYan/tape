@@ -12,9 +12,9 @@ import (
 	"io/ioutil"
 	"math/big"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/utils"
-	"github.com/Yunpeng-J/HLF-2.2/common/crypto"
-	"github.com/Yunpeng-J/fabric-protos-go/common"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/utils"
+	"github.com/GwanWingYan/HLF-2.2/common/crypto"
+	"github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/pkg/errors"
 )
 

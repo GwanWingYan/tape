@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/bccsp"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

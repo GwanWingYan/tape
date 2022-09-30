@@ -10,11 +10,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/GwanWingYan/HLF-2.2/core/scc/cscc"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	common2 "github.com/GwanWingYan/fabric-protos-go/common"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/golang/protobuf/proto"
-	common2 "github.com/Yunpeng-J/fabric-protos-go/common"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/core/scc/cscc"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
 	"github.com/spf13/cobra"
 )
 

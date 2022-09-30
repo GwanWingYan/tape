@@ -7,13 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	ab "github.com/Yunpeng-J/fabric-protos-go/orderer"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/common/util"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/identity"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/common/util"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/identity"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
+	ab "github.com/GwanWingYan/fabric-protos-go/orderer"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 )
 

@@ -15,8 +15,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 

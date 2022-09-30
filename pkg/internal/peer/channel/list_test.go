@@ -10,10 +10,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/msp"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/golang/protobuf/proto"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/msp"
 	"github.com/stretchr/testify/assert"
 )
 

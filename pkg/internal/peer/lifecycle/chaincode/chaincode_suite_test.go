@@ -11,11 +11,11 @@ import (
 	"os"
 	"testing"
 
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode"
-	msptesttools "github.com/Yunpeng-J/HLF-2.2/msp/mgmt/testtools"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode"
+	msptesttools "github.com/GwanWingYan/HLF-2.2/msp/mgmt/testtools"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

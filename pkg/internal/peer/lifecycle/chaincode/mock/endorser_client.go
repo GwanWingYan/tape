@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 )
 

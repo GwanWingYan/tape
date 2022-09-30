@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/Yunpeng-J/tape/e2e/mock"
+	"github.com/GwanWingYan/tape/e2e/mock"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

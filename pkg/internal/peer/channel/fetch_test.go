@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	ab "github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/HLF-2.2/core/config/configtest"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common/mock"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/HLF-2.2/core/config/configtest"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common/mock"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
+	ab "github.com/GwanWingYan/fabric-protos-go/orderer"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )

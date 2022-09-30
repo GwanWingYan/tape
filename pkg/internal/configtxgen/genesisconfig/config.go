@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Yunpeng-J/fabric-protos-go/orderer/etcdraft"
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/common/viperutil"
-	cf "github.com/Yunpeng-J/HLF-2.2/core/config"
-	"github.com/Yunpeng-J/HLF-2.2/msp"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/common/viperutil"
+	cf "github.com/GwanWingYan/HLF-2.2/core/config"
+	"github.com/GwanWingYan/HLF-2.2/msp"
+	"github.com/GwanWingYan/fabric-protos-go/orderer/etcdraft"
 	"github.com/spf13/viper"
 )
 

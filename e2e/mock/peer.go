@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 )
 
 type Peer struct {

@@ -11,9 +11,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxlator/update"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/golang/protobuf/proto"
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxlator/update"
 )
 
 func fieldBytes(fieldName string, r *http.Request) ([]byte, error) {

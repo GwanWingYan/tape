@@ -1,12 +1,12 @@
 package client
 
 import (
-"io/ioutil"
+	"io/ioutil"
 
-"github.com/Yunpeng-J/fabric-protos-go/msp"
-"github.com/gogo/protobuf/proto"
-"github.com/pkg/errors"
-"gopkg.in/yaml.v2"
+	"github.com/GwanWingYan/fabric-protos-go/msp"
+	"github.com/gogo/protobuf/proto"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {

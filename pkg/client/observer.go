@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

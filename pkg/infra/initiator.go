@@ -3,7 +3,7 @@ package infra
 import (
 	"strconv"
 
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

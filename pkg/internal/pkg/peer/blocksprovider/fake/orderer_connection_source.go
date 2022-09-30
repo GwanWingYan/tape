@@ -4,8 +4,8 @@ package fake
 import (
 	"sync"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/peer/blocksprovider"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/peer/orderers"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/peer/blocksprovider"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/peer/orderers"
 )
 
 type OrdererConnectionSource struct {

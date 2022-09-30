@@ -9,8 +9,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/Yunpeng-J/fabric-chaincode-go/shim"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-chaincode-go/shim"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 )
 
 // No-op test chaincode

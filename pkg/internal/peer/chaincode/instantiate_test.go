@@ -9,7 +9,7 @@ package chaincode
 import (
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
 	"github.com/stretchr/testify/assert"
 )
 

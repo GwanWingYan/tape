@@ -10,8 +10,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/semaphore"
-	"github.com/Yunpeng-J/HLF-2.2/core/peer"
+	"github.com/GwanWingYan/HLF-2.2/common/semaphore"
+	"github.com/GwanWingYan/HLF-2.2/core/peer"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )

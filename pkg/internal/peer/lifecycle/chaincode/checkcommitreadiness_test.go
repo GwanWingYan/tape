@@ -9,12 +9,12 @@ package chaincode_test
 import (
 	"encoding/json"
 
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
+	lb "github.com/GwanWingYan/fabric-protos-go/peer/lifecycle"
 	"github.com/golang/protobuf/proto"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	lb "github.com/Yunpeng-J/fabric-protos-go/peer/lifecycle"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 

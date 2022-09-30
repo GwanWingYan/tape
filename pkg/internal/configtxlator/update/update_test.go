@@ -9,7 +9,7 @@ package update
 import (
 	"testing"
 
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/stretchr/testify/assert"
 )
 

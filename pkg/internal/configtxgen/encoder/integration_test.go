@@ -11,12 +11,12 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
-	"github.com/Yunpeng-J/HLF-2.2/common/channelconfig"
-	"github.com/Yunpeng-J/HLF-2.2/core/config/configtest"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxgen/encoder"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxgen/genesisconfig"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/common/channelconfig"
+	"github.com/GwanWingYan/HLF-2.2/core/config/configtest"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxgen/encoder"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxgen/genesisconfig"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
 
 	"github.com/pkg/errors"
 )

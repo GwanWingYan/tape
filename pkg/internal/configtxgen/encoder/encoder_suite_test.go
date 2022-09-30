@@ -9,7 +9,7 @@ package encoder_test
 import (
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/factory"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/factory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

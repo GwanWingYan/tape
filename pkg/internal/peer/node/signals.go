@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -12,7 +13,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/diag"
+	"github.com/GwanWingYan/HLF-2.2/common/diag"
 )
 
 func addPlatformSignals(sigs map[os.Signal]func()) map[os.Signal]func() {

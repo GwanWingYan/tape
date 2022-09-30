@@ -1,7 +1,7 @@
 package infra_test
 
 import (
-	"github.com/Yunpeng-J/tape/pkg/infra"
+	"github.com/GwanWingYan/tape/pkg/infra"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

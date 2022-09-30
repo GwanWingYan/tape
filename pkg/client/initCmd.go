@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Yunpeng-J/tape/pkg/workload"
+	"github.com/GwanWingYan/tape/pkg/workload"
 
-	"github.com/Yunpeng-J/tape/pkg/operations"
+	"github.com/GwanWingYan/tape/pkg/operations"
 	"github.com/spf13/viper"
 )
 

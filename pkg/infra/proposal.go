@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/HLF-2.2/core/ledger/kvledger/txmgmt/rwsetutil"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/fabric-protos-go/common"
+	"github.com/GwanWingYan/fabric-protos-go/orderer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/golang/protobuf/proto"
-	"github.com/Yunpeng-J/HLF-2.2/core/ledger/kvledger/txmgmt/rwsetutil"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
 	"github.com/pkg/errors"
 )
 

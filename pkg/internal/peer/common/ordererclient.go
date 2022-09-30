@@ -9,8 +9,8 @@ import (
 	"context"
 	"crypto/tls"
 
-	ab "github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/comm"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/comm"
+	ab "github.com/GwanWingYan/fabric-protos-go/orderer"
 	"github.com/pkg/errors"
 )
 

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/tape/pkg/workload"
-	"github.com/Yunpeng-J/tape/pkg/workload/smallbank"
-	"github.com/Yunpeng-J/tape/pkg/workload/utils"
+	"github.com/GwanWingYan/fabric-protos-go/common"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
+	"github.com/GwanWingYan/tape/pkg/workload"
+	"github.com/GwanWingYan/tape/pkg/workload/smallbank"
+	"github.com/GwanWingYan/tape/pkg/workload/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

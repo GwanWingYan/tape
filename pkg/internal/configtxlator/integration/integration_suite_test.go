@@ -22,7 +22,7 @@ func TestIntegration(t *testing.T) {
 var configtxlatorPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	configtxlatorPath, err := gexec.Build("github.com/Yunpeng-J/HLF-2.2/cmd/configtxlator")
+	configtxlatorPath, err := gexec.Build("github.com/GwanWingYan/HLF-2.2/cmd/configtxlator")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(configtxlatorPath)

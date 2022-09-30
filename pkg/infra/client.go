@@ -5,9 +5,9 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/tape/pkg/internal/pkg/comm"
+	"github.com/GwanWingYan/fabric-protos-go/orderer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
+	"github.com/GwanWingYan/tape/pkg/internal/pkg/comm"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"

@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"time"
 
-	mspproto "github.com/Yunpeng-J/fabric-protos-go/msp"
-	"github.com/Yunpeng-J/HLF-2.2/common/policies"
-	"github.com/Yunpeng-J/HLF-2.2/msp"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/HLF-2.2/common/policies"
+	"github.com/GwanWingYan/HLF-2.2/msp"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	mspproto "github.com/GwanWingYan/fabric-protos-go/msp"
 	"github.com/stretchr/testify/mock"
 )
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package txflags
 
 import (
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 )
 
 // ValidationFlags is array of transaction validation codes. It is used when committer validates block.

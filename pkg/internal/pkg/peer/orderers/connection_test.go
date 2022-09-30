@@ -15,8 +15,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/peer/orderers"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/peer/orderers"
 )
 
 type comparableEndpoint struct {

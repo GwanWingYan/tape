@@ -4,7 +4,7 @@ package mock
 import (
 	"sync"
 
-	"github.com/Yunpeng-J/HLF-2.2/core/ledger"
+	"github.com/GwanWingYan/HLF-2.2/core/ledger"
 )
 
 type GetLedger struct {

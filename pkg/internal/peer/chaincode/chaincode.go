@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp"
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/packaging"
+	"github.com/GwanWingYan/HLF-2.2/bccsp"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/packaging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

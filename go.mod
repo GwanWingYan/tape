@@ -1,12 +1,8 @@
-module github.com/Yunpeng-J/tape
+module github.com/GwanWingYan/tape
 
 go 1.15
 
 require (
-	github.com/Yunpeng-J/HLF-2.2 v1.5.6
-	github.com/Yunpeng-J/fabric-chaincode-go v0.0.0-20210607094423-1c77abb20acc
-	github.com/Yunpeng-J/fabric-config v0.0.0-20210607091326-a85e56a3ec3c
-	github.com/Yunpeng-J/fabric-protos-go v0.0.0-20210928071911-ec2b84cdd1d8
 	github.com/fsouza/go-dockerclient v1.4.1
 	github.com/go-kit/kit v0.8.0
 	github.com/gogo/protobuf v1.3.2

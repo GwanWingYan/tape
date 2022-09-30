@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/Yunpeng-J/HLF-2.2/bccsp"
-	"github.com/Yunpeng-J/HLF-2.2/core/common/ccpackage"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/HLF-2.2/bccsp"
+	"github.com/GwanWingYan/HLF-2.2/core/common/ccpackage"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
 	"github.com/spf13/cobra"
 )
 

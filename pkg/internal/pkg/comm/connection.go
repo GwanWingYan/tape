@@ -11,9 +11,9 @@ import (
 	"crypto/x509"
 	"sync"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/channelconfig"
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/msp"
+	"github.com/GwanWingYan/HLF-2.2/common/channelconfig"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/msp"
 	"google.golang.org/grpc/credentials"
 )
 

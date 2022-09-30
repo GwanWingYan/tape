@@ -4,10 +4,10 @@ package mock
 import (
 	"sync"
 
-	"github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
-	ledgera "github.com/Yunpeng-J/HLF-2.2/common/ledger"
-	"github.com/Yunpeng-J/HLF-2.2/core/ledger"
+	"github.com/GwanWingYan/fabric-protos-go/common"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
+	ledgera "github.com/GwanWingYan/HLF-2.2/common/ledger"
+	"github.com/GwanWingYan/HLF-2.2/core/ledger"
 )
 
 type PeerLedger struct {

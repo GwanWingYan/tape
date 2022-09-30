@@ -12,9 +12,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/core/config"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/comm"
+	"github.com/GwanWingYan/HLF-2.2/core/config"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/comm"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )

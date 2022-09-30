@@ -12,11 +12,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/GwanWingYan/HLF-2.2/bccsp"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	pcommon "github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/golang/protobuf/proto"
-	pcommon "github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
 	"github.com/stretchr/testify/assert"
 )
 

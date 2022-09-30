@@ -4,7 +4,7 @@ package mocks
 import (
 	"sync"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/policies"
+	"github.com/GwanWingYan/HLF-2.2/common/policies"
 )
 
 type PolicyManager struct {

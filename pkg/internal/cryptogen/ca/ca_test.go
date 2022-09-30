@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/cryptogen/ca"
-	"github.com/Yunpeng-J/HLF-2.2/internal/cryptogen/csp"
+	"github.com/GwanWingYan/HLF-2.2/internal/cryptogen/ca"
+	"github.com/GwanWingYan/HLF-2.2/internal/cryptogen/csp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

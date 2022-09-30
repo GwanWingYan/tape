@@ -11,9 +11,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/cryptogen/ca"
-	"github.com/Yunpeng-J/HLF-2.2/internal/cryptogen/csp"
-	fabricmsp "github.com/Yunpeng-J/HLF-2.2/msp"
+	"github.com/GwanWingYan/HLF-2.2/internal/cryptogen/ca"
+	"github.com/GwanWingYan/HLF-2.2/internal/cryptogen/csp"
+	fabricmsp "github.com/GwanWingYan/HLF-2.2/msp"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )

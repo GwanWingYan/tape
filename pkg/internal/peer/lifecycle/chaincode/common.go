@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/GwanWingYan/HLF-2.2/common/policydsl"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/chaincode"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/golang/protobuf/proto"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/common/policydsl"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/chaincode"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )

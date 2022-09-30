@@ -13,8 +13,8 @@ import (
 	"math/rand"
 	"sync"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/comm"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/comm"
 
 	"github.com/pkg/errors"
 )

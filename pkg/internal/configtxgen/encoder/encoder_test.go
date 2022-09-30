@@ -12,16 +12,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/GwanWingYan/HLF-2.2/common/util"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxgen/encoder"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxgen/encoder/fakes"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxgen/genesisconfig"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/identity"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
+	ab "github.com/GwanWingYan/fabric-protos-go/orderer"
+	"github.com/GwanWingYan/fabric-protos-go/orderer/etcdraft"
 	"github.com/golang/protobuf/proto"
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	ab "github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/fabric-protos-go/orderer/etcdraft"
-	"github.com/Yunpeng-J/HLF-2.2/common/util"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxgen/encoder"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxgen/encoder/fakes"
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxgen/genesisconfig"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/identity"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
 )
 
 //go:generate counterfeiter -o fakes/signer_serializer.go --fake-name SignerSerializer . signerSerializer

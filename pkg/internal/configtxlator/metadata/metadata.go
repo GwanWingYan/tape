@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/cryptogen/metadata"
+	"github.com/GwanWingYan/HLF-2.2/internal/cryptogen/metadata"
 )
 
 const ProgramName = "configtxlator"

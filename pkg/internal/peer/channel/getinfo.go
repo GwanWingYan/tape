@@ -11,12 +11,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/GwanWingYan/HLF-2.2/core/scc/qscc"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/golang/protobuf/proto"
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/core/scc/qscc"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

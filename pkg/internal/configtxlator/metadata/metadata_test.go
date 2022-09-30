@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/configtxlator/metadata"
+	"github.com/GwanWingYan/HLF-2.2/internal/configtxlator/metadata"
 	"github.com/stretchr/testify/assert"
 )
 

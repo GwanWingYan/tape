@@ -9,10 +9,10 @@ package chaincode
 import (
 	"crypto/tls"
 
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/identity"
+	"github.com/GwanWingYan/HLF-2.2/bccsp"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/identity"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )

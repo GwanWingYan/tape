@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/Yunpeng-J/tape/pkg/metrics"
-	"github.com/Yunpeng-J/tape/pkg/workload/utils"
+	"github.com/GwanWingYan/tape/pkg/metrics"
+	"github.com/GwanWingYan/tape/pkg/workload/utils"
 )
 
 // seq + session + txid

@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package chaincode_test
 
 import (
-	pb "github.com/Yunpeng-J/fabric-protos-go/peer"
-	"github.com/Yunpeng-J/HLF-2.2/bccsp/sw"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
+	"github.com/GwanWingYan/HLF-2.2/bccsp/sw"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/lifecycle/chaincode/mock"
+	pb "github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 

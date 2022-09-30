@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
-	"github.com/Yunpeng-J/HLF-2.2/protoutil"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/protoutil"
 	"github.com/spf13/cobra"
 )
 

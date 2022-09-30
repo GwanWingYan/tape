@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	cb "github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
+	cb "github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/stretchr/testify/assert"
 )
 

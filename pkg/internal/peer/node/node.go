@@ -8,8 +8,8 @@ package node
 import (
 	"fmt"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/flogging"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/common"
+	"github.com/GwanWingYan/HLF-2.2/common/flogging"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/common"
 	"github.com/spf13/cobra"
 )
 

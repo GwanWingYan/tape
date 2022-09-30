@@ -1,6 +1,6 @@
 package client
 
-import "github.com/Yunpeng-J/tape/pkg/metrics"
+import "github.com/GwanWingYan/tape/pkg/metrics"
 
 var (
 	endorsementLatency = metrics.HistogramOpts{

@@ -6,9 +6,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/Yunpeng-J/fabric-protos-go/common"
-	"github.com/Yunpeng-J/fabric-protos-go/orderer"
-	"github.com/Yunpeng-J/fabric-protos-go/peer"
+	"github.com/GwanWingYan/fabric-protos-go/common"
+	"github.com/GwanWingYan/fabric-protos-go/orderer"
+	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

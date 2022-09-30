@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package comm
 
-import "github.com/Yunpeng-J/HLF-2.2/common/metrics"
+import "github.com/GwanWingYan/HLF-2.2/common/metrics"
 
 var (
 	openConnCounterOpts = metrics.CounterOpts{

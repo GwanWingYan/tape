@@ -10,8 +10,8 @@ package gossip
 import (
 	"testing"
 
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/gossip/mocks"
-	"github.com/Yunpeng-J/HLF-2.2/msp"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/gossip/mocks"
+	"github.com/GwanWingYan/HLF-2.2/msp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Yunpeng-J/HLF-2.2/core/chaincode/persistence"
-	"github.com/Yunpeng-J/HLF-2.2/internal/peer/packaging"
+	"github.com/GwanWingYan/HLF-2.2/core/chaincode/persistence"
+	"github.com/GwanWingYan/HLF-2.2/internal/peer/packaging"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

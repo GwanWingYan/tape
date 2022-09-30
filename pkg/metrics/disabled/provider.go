@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package disabled
 
 import (
-	"github.com/Yunpeng-J/tape/pkg/metrics"
+	"github.com/GwanWingYan/tape/pkg/metrics"
 )
 
 type Provider struct{}

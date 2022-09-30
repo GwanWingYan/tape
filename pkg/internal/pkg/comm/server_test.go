@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Yunpeng-J/HLF-2.2/common/crypto/tlsgen"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/comm"
-	"github.com/Yunpeng-J/HLF-2.2/internal/pkg/comm/testpb"
+	"github.com/GwanWingYan/HLF-2.2/common/crypto/tlsgen"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/comm"
+	"github.com/GwanWingYan/HLF-2.2/internal/pkg/comm/testpb"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
