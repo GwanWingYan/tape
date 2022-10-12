@@ -6,7 +6,7 @@
 
 # Run
 1. Link to crypto materials: `ln -sf $YOUR_PROJECT/organizations`
-2. End-to-End Run     
+2. End-to-End Run   
     ```bash
     # create 2000 accounts
     ./tape -c config.yaml --txtype put --endorser_group 1 --number 2000 --seed 2333 --rate 1000 --burst 50000 --orderer_client 5 --num_of_conn 4 --client_per_conn 4 
@@ -42,4 +42,4 @@ bash scripts/conflict.sh
 
 # TODO
 1. zipfan distribution workload
-2. add prometheus 
+2. add prometheus

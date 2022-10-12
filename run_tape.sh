@@ -4,12 +4,13 @@
 # Build tape binary in the root directory of tape project
 ################################################################################
 function build_binary() {
-  if [[ -f ./tape ]]; then
+  if [[ -f ./tape || -f ./benchmark ]]; then
     echo "Already have the tape binary built."
     return 0
   fi
 
   go mod tidy && go build ./cmd/tape
+  # go mod tidy && go build -o bench ./benchmark
   if [[ $? -ne 0 ]]; then
     echo "Fail to build tape binary."
     exit 1
@@ -52,50 +53,62 @@ function clean() {
 # Run end to end test
 ################################################################################
 function run() {
-  local RESULT_FILE="$1"
+  END_TO_END='true'
+  CFG_FILE='config.yaml'
 
-  # import test options
-  source ./test.env
+  SEED='2333'   # random seed (default 0)
+  RATE='0'      # Creates tx rate, default 0 as unlimited (default 0)
+  BURST='50000' # Burst size for Tape, should bigger than rate (default 1000)
+
+  CONN_NUM='4'        # Number of grpc connections (default 16)
+  CLIENT_PER_CONN='4' # Number of clients per grpc connection (default 16)
+  ORDERER_CLIENT='5'  #TODO: Orderer clients (default 20)
+  THREAD='1'          #TODO: Signature thread (default 1)
+  ENDORSER_GROUP='1'  #TODO: Endorser groups
+
+  TX_TYPE='put' # Transaction type ('put' or 'conflict')
+  TX_NUM='2000' #TODO: Number of tx for shot (default 50000)
+  TX_TIME='120' #TODO: Time of tx for shot (default 120s)
 
   # check crypto materials are ready
   ORGS_DIR="${NETWORK_PATH}/organizations"
   [[ -d ${ORGS_DIR} ]] || ln -sf ${ORGS_DIR}
 
   if [[ ${END_TO_END} == 'true' ]]; then
-    ./tape -c "${CFG_FILE}" --txtype "${TX_TYPE}" --number "${TX_NUM}" --time "${TX_TIME}" --endorser_group "${ENDORSER_GROUP}" --seed "${SEED}" --rate "${RATE}" --burst "${BURST}" --orderer_client "${ORDERER_CLIENT}" --num_of_conn "${CONN_NUM}" --client_per_conn "${CLIENT_PER_CONN}" --thread "${THREAD}" > "${RESULT_FILE}"
+    ./tape -c "${CFG_FILE}" --seed "${SEED}" --rate "${RATE}" --burst "${BURST}" --num_of_conn "${CONN_NUM}" --client_per_conn "${CLIENT_PER_CONN}" --orderer_client "${ORDERER_CLIENT}" --thread "${THREAD}" --endorser_group "${ENDORSER_GROUP}" --txtype "${TX_TYPE}" --number "${TX_NUM}" --time "${TX_TIME}"
   else
-    ./tape --no-e2e -c "${CFG_FILE}" --txtype "${TX_TYPE}" --number "${TX_NUM}" --time "${TX_TIME}" --endorser_group "${ENDORSER_GROUP}" --seed "${SEED}" --rate "${RATE}" --burst "${BURST}" --orderer_client "${ORDERER_CLIENT}" --num_of_conn "${CONN_NUM}" --client_per_conn "${CLIENT_PER_CONN}" --thread "${THREAD}" > "${RESULT_FILE}"
+    #TODO not end to end
+    :
   fi
 }
 
 function main() {
   set -x
   case $1 in
-    'build')
-      shift
-      if [[ -z $1 ]]; then
-        build_binary
-        build_docker
-      elif [[ $1 == 'binary' ]]; then
-        build_binary
-      elif [[ $1 == 'docker' ]]; then
-        build_docker
-      else
-        echo "Invalid build option"
-      fi
-      ;;
-    'run')
-      shift
-      run "$1"
-      ;;
-    'clean')
-      shift
-      clean
-      ;;
-    *)
-      echo 'Invalid option'
-      exit 1
-      ;;
+  'build')
+    shift
+    if [[ -z $1 ]]; then
+      build_binary
+      build_docker
+    elif [[ $1 == 'binary' ]]; then
+      build_binary
+    elif [[ $1 == 'docker' ]]; then
+      build_docker
+    else
+      echo "Invalid build option"
+    fi
+    ;;
+  'run')
+    shift
+    run
+    ;;
+  'clean')
+    clean
+    ;;
+  *)
+    echo 'Invalid option'
+    exit 1
+    ;;
   esac
   set +x
 }

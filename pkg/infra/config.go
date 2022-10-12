@@ -63,7 +63,7 @@ func LoadConfig(f string) (Config, error) {
 		return config, errors.Wrapf(err, "error unmarshal %s", f)
 	}
 
-	for i, _ := range config.Endorsers {
+	for i := range config.Endorsers {
 		err = config.Endorsers[i].loadConfig()
 		if err != nil {
 			return config, err

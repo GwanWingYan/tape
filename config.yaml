@@ -1,23 +1,23 @@
 # Definition of nodes
 peer1: &peer1
   addr: localhost:7051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
 
 peer2: &peer2
   addr: localhost:8051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt
 
 peer3: &peer3
   addr: localhost:9051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
+  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
 
 peer4: &peer4
   addr: localhost:10051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
+  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt
 
 orderer1: &orderer1
   addr: localhost:7050
-  tls_ca_cert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  tls_ca_cert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/ca.crt
 
 # Nodes to interact with
 endorser_groups: 1
@@ -38,8 +38,8 @@ chaincode: smallbank
 # args:
 #   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
-sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
+private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem
+sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/cert.pem
 
 num_of_conn: 16
 client_per_conn: 16
@@ -50,13 +50,14 @@ num_of_transactions: 50000
 time_of_transactions: 120 #TODO
 tx_type: put
 
-logdir: log.transactions
+# path of benchmark log
+logdir: ../result/tx.log
 
-# if check_txid is false, Fabric must disable txid check in peer and orderer.  
-# It should always be set to true. 
-check_txid: false 
+# if check_txid is false, Fabric must disable txid check in peer and orderer.
+# It should always be set to true.
+check_txid: false
 check_rwset: true # if true, output rwset for each transaction
-e2e: false  # end-to-end test
+e2e: false # end-to-end test
 seed: 190129 # if seed equals to 0, set seed to the current time.
 
 # new parameters
@@ -101,11 +102,11 @@ KV8: 0.2
 KV16: 0.1
 
 # deprecated
-hotBuyer: 0.05 
-hotSeller: 0.5 
-maxTxsPerSession: 30 
-minTxsPerSession: 10 
-maxHotPay: 10 
+hotBuyer: 0.05
+hotSeller: 0.5
+maxTxsPerSession: 30
+minTxsPerSession: 10
+maxHotPay: 10
 maxUniqueKeys: 1024
 
 queryNode: 0
