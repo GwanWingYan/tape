@@ -30,9 +30,6 @@ function build_docker_image() {
     echo "Fail to build tape docker image."
     exit 1
   fi
-
-  # remove intermediate images
-  docker image prune --force --filter label=stage=builder
 }
 
 function clean() {
