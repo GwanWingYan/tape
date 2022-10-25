@@ -1,26 +1,26 @@
 # Definition of nodes
 peer1: &peer1
   addr: localhost:7051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+  tlsCACert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
 
 peer2: &peer2
   addr: localhost:8051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt
+  tlsCACert: ./organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt
 
 peer3: &peer3
   addr: localhost:9051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
+  tlsCACert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
 
 peer4: &peer4
   addr: localhost:10051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt
+  tlsCACert: ./organizations/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt
 
 orderer1: &orderer1
   addr: localhost:7050
-  tls_ca_cert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/ca.crt
+  tlsCACert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/ca.crt
 
 # Nodes to interact with
-endorser_groups: 1
+endorserGroupNum: 1
 endorsers:
   # - *peer1
   # - *peer2
@@ -38,25 +38,27 @@ chaincode: smallbank
 # args:
 #   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem
-sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/cert.pem
+privateKey: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem
+signCert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/cert.pem
 
-num_of_conn: 16
-client_per_conn: 16
-orderer_client: 20
-threads: 10
+connNum: 16
+clientPerConnNum: 16
+broadcasterNum: 20
+signerNum: 10
+integratorNum: 10
 
-num_of_transactions: 50000
-time_of_transactions: 120 #TODO
-tx_type: put
+txNum: 50000
+txTime: 120 #TODO
+txType: put
 
 # path of benchmark log
-logdir: ../result/tx.log
+logPath: ../result/tx.log
 
-# if check_txid is false, Fabric must disable txid check in peer and orderer.
+# if checkTxID is false, Fabric must disable txid check in peer and orderer.
 # It should always be set to true.
-check_txid: false
-check_rwset: true # if true, output rwset for each transaction
+checkTxID: false
+# if true, output rwset for each transaction
+checkRWSet: true
 e2e: false # end-to-end test
 seed: 190129 # if seed equals to 0, set seed to the current time.
 
@@ -66,7 +68,6 @@ metricsType: prometheus
 metricsAddr: 0.0.0.0:9876
 interval: 10000
 clientsPerEndorser: 1 # one client per endorser to simulate the leading endorser
-broadcasterNum: 20
 smartContract: smallbank # KVStore
 
 generatorBuffer: 10000

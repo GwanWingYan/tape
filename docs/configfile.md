@@ -8,15 +8,15 @@
 # Definition of nodes
 peer1: &peer1
   addr: localhost:7051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+  tlsCACert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
 
 peer2: &peer2
   addr: localhost:9051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
+  tlsCACert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
 
 orderer1: &orderer1
   addr: localhost:7050
-  tls_ca_cert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  tlsCACert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
 # Nodes to interact with
 endorsers:
@@ -34,10 +34,10 @@ chaincode: basic
 args:
   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
-sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
-num_of_conn: 10
-client_per_conn: 10
+privateKey: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
+signCert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
+connNum: 10
+clientPerConnNum: 10
 
 ```
 接下来我们将逐一解析该配置文件的含义。
@@ -48,15 +48,15 @@ client_per_conn: 10
 # Definition of nodes
 peer1: &peer1
   addr: localhost:7051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+  tlsCACert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
 
 peer2: &peer2
   addr: localhost:9051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
+  tlsCACert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
 
 orderer1: &orderer1
   addr: localhost:7050
-  tls_ca_cert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  tlsCACert: ./organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 ```
 
 定义了不同的节点，包括 Peer 节点和排序节点，配置中需要确认节点地址以及 TLS CA 证书（如果启用 TLS，则必须配置 TLS CA 证书）。其中节点地址格式为`地址:端口`。此处`地址`推荐使用域名，因此您可能还需要在 hosts 文件中增加节点域名和 IP 的映射关系。
@@ -66,27 +66,27 @@ orderer1: &orderer1
 ```yaml
 peer1: &peer1
   addr: localhost:7051
-  tls_ca_cert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
-  tls_ca_key: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-  tls_ca_root: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+  tlsCACert: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+  tlsCAKey: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+  tlsCARoot: ./organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
 
 peer2: &peer2
   addr: localhost:9051
-  tls_ca_cert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
-  tls_ca_key: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/server.key
-  tls_ca_root: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/server.crt
+  tlsCACert: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/tlscacerts/tlsca.org2.example.com-cert.pem
+  tlsCAKey: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/server.key
+  tlsCARoot: ./organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/server.crt
 
 orderer1: &orderer1
   addr: localhost:7050
-  tls_ca_cert: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
-  tls_ca_key: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.key
-  tls_ca_root: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.crt
+  tlsCACert: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  tlsCAKey: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.key
+  tlsCARoot: ./organizations/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.crt
 ```
 
 其中三个 TLS 相关的证书/密钥说明如下：
-- `tls_ca_cert`：客户端 TLS 通信时使用的证书文件。
-- `tls_ca_key`：客户端 TLS 通信时使用的私钥文件。
-- `tls_ca_root`：CA 根证书文件。
+- `tlsCACert`：客户端 TLS 通信时使用的证书文件。
+- `tlsCAKey`：客户端 TLS 通信时使用的私钥文件。
+- `tlsCARoot`：CA 根证书文件。
 
 接下来的三个部分：
 
@@ -119,10 +119,10 @@ chaincode: basic
 args:
   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
-sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
-num_of_conn: 10
-client_per_conn: 10
+privateKey: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
+signCert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
+connNum: 10
+clientPerConnNum: 10
 ```
 
 `channel`：通道名。
@@ -141,10 +141,10 @@ args:
 
 `mspid`：MSP ID 是用户属性的一部分，表明该用户所属的组织。
 
-`private_key`：用户私钥的路径。如果你使用 BYFN 作为你的测试网络，私钥路径为 `crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk` 。
+`privateKey`：用户私钥的路径。如果你使用 BYFN 作为你的测试网络，私钥路径为 `crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk` 。
 
-`sign_cert`：用户证书的路径。如果你使用 BYFN 作为你的测试网络，私钥路径为 `crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem` 。
+`signCert`：用户证书的路径。如果你使用 BYFN 作为你的测试网络，私钥路径为 `crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem` 。
 
-`num_of_conn`：客户端和 Peer 节点，客户端和排序节点之间创建的 gRPC 连接数量。如果你觉得向 Fabric 施加的压力还不够，可以将这个值设置的更大一些。
+`connNum`：客户端和 Peer 节点，客户端和排序节点之间创建的 gRPC 连接数量。如果你觉得向 Fabric 施加的压力还不够，可以将这个值设置的更大一些。
 
-`client_per_conn`：每个连接用于向每个 Peer 节点发送 提案的客户端数量。如果你觉得向 Fabric 施加的压力还不够，可以将这个值设置的更大一些。所以 Tape 向 Fabric 发送交易的并发量为 `num_of_conn` * `client_per_conn`。
+`clientPerConnNum`：每个连接用于向每个 Peer 节点发送 提案的客户端数量。如果你觉得向 Fabric 施加的压力还不够，可以将这个值设置的更大一些。所以 Tape 向 Fabric 发送交易的并发量为 `connNum` * `clientPerConnNum`。

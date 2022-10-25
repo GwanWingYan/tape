@@ -9,8 +9,11 @@ import (
 	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/GwanWingYan/tape/pkg/internal/pkg/comm"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+)
+
+const (
+	MAX_TRY = 3
 )
 
 func CreateGRPCClient(node Node) (*comm.GRPCClient, error) {
@@ -41,51 +44,48 @@ func CreateGRPCClient(node Node) (*comm.GRPCClient, error) {
 	grpcClient, err := comm.NewGRPCClient(config)
 	//to do: unit test for this error, current fails to make case for this
 	if err != nil {
-		return nil, errors.Wrapf(err, "error connecting to %s", node.Addr)
+		return nil, errors.Wrapf(err, "error connecting to %s", node.Address)
 	}
 
 	return grpcClient, nil
 }
 
-func CreateEndorserClient(node Node, logger *log.Logger) (peer.EndorserClient, error) {
-	conn, err := DailConnection(node, logger)
+func CreateEndorserClient(node Node) (peer.EndorserClient, error) {
+	conn, err := DialConnection(node)
 	if err != nil {
 		return nil, err
 	}
 	return peer.NewEndorserClient(conn), nil
 }
 
-func CreateBroadcastClient(node Node, logger *log.Logger) (orderer.AtomicBroadcast_BroadcastClient, error) {
-	conn, err := DailConnection(node, logger)
+func CreateBroadcastClient(node Node) (orderer.AtomicBroadcast_BroadcastClient, error) {
+	conn, err := DialConnection(node)
 	if err != nil {
 		return nil, err
 	}
 	return orderer.NewAtomicBroadcastClient(conn).Broadcast(context.Background())
 }
 
-func CreateDeliverFilteredClient(node Node, logger *log.Logger) (peer.Deliver_DeliverFilteredClient, error) {
-	conn, err := DailConnection(node, logger)
+func CreateDeliverFilteredClient() (peer.Deliver_DeliverFilteredClient, error) {
+	conn, err := DialConnection(config.Committer)
 	if err != nil {
 		return nil, err
 	}
 	return peer.NewDeliverClient(conn).DeliverFiltered(context.Background())
 }
 
-// TODO: use a global get logger function instead inject a logger
-func DailConnection(node Node, logger *log.Logger) (*grpc.ClientConn, error) {
+func DialConnection(node Node) (*grpc.ClientConn, error) {
 	gRPCClient, err := CreateGRPCClient(node)
 	if err != nil {
 		return nil, err
 	}
 	var connError error
 	var conn *grpc.ClientConn
-	for i := 1; i <= 3; i++ {
-		conn, connError = gRPCClient.NewConnection(node.Addr, func(tlsConfig *tls.Config) { tlsConfig.InsecureSkipVerify = true })
+	for i := 1; i <= MAX_TRY; i++ {
+		conn, connError = gRPCClient.NewConnection(node.Address, func(tlsConfig *tls.Config) { tlsConfig.InsecureSkipVerify = true })
 		if connError == nil {
 			return conn, nil
-		} else {
-			logger.Errorf("%d of 3 attempts to make connection to %s, details: %s", i, node.Addr, connError)
 		}
 	}
-	return nil, errors.Wrapf(connError, "error connecting to %s", node.Addr)
+	return nil, errors.Wrapf(connError, "failed to dial %s: %s", node.Address)
 }

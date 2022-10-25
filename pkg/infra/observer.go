@@ -6,21 +6,19 @@ import (
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 type Observer struct {
-	d      peer.Deliver_DeliverFilteredClient
-	logger *log.Logger
+	client peer.Deliver_DeliverFilteredClient
 }
 
-func CreateObserver(channel string, node Node, crypto *Crypto, logger *log.Logger) (*Observer, error) {
-	deliverer, err := CreateDeliverFilteredClient(node, logger)
+func NewObserver() (*Observer, error) {
+	deliverer, err := CreateDeliverFilteredClient()
 	if err != nil {
 		return nil, err
 	}
 
-	seek, err := CreateSignedDeliverNewestEnv(channel, crypto)
+	seek, err := CreateSignedDeliverNewestEnv()
 	if err != nil {
 		return nil, err
 	}
@@ -34,54 +32,60 @@ func CreateObserver(channel string, node Node, crypto *Crypto, logger *log.Logge
 		return nil, err
 	}
 
-	return &Observer{d: deliverer, logger: logger}, nil
+	return &Observer{
+		client: deliverer,
+	}, nil
 }
 
-func (o *Observer) Start(N int32, errorCh chan error, finishCh chan struct{}, now time.Time, abort *int32) {
-	o.logger.Debugf("start observer")
-	var n int32 = 0
-	tempchann := make(chan *peer.DeliverResponse_FilteredBlock)
+// Start starts observing
+func (o *Observer) Start() {
+	logger.Infof("Start observer\n")
+
+	deliverCh := make(chan *peer.DeliverResponse_FilteredBlock)
+
+	// Process FilteredBlock
 	go func() {
+		var validTxNum int32 = 0
 		for {
 			select {
-			case fb := <-tempchann:
-				n = n + int32(len(fb.FilteredBlock.FilteredTransactions))
-				st := time.Now().UnixNano()
+			case fb := <-deliverCh:
+				endTime := time.Now().UnixNano()
+				validTxNum = validTxNum + int32(len(fb.FilteredBlock.FilteredTransactions))
 				for _, tx := range fb.FilteredBlock.FilteredTransactions {
 					txid := tx.GetTxid()
-					buffer_end <- fmt.Sprintf("end: %d %d_%s %s", st, global_txid2id[txid], txid, tx.TxValidationCode)
+					printCh <- fmt.Sprintf("End: %d %d %s %s", endTime, txid2id[txid], txid, tx.TxValidationCode)
 				}
-				if n+(*abort) >= N {
+				if validTxNum+Metric.Abort >= int32(config.TxNum) {
 					close(finishCh)
 					return
 				}
-				// buffer_tot = append(buffer_tot, fmt.Sprintf("Time
-				// %8.2fs\tBlock %6d\tTx %6d\n", time.Since(now).Seconds(),
-				// fb.FilteredBlock.Number,
-				// len(fb.FilteredBlock.FilteredTransactions)))
 			case <-time.After(20 * time.Second):
 				close(finishCh)
 				return
 			}
 		}
 	}()
-	for {
-		r, err := o.d.Recv()
-		if err != nil {
-			errorCh <- err
-		}
 
-		if r == nil {
-			errorCh <- errors.Errorf("received nil message, but expect a valid block instead. You could look into your peer logs for more info")
-			return
+	// Receive FilteredBlock
+	go func() {
+		for {
+			r, err := o.client.Recv()
+			if err != nil {
+				errorCh <- err
+			}
+			if r == nil {
+				errorCh <- errors.Errorf("received nil message, but expect a valid block instead. You could look into your peer logs for more info")
+				return
+			}
+
+			switch t := r.Type.(type) {
+			case *peer.DeliverResponse_FilteredBlock:
+				deliverCh <- t
+			case *peer.DeliverResponse_Status:
+				logger.Infoln("Status:", t.Status)
+			default:
+				logger.Infoln("Please check the return type manually")
+			}
 		}
-		switch t := r.Type.(type) {
-		case *peer.DeliverResponse_FilteredBlock:
-			tempchann <- t
-		case *peer.DeliverResponse_Status:
-			log.Println("status:", t.Status)
-		default:
-			log.Println("please check the return type manually")
-		}
-	}
+	}()
 }

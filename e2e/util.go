@@ -19,7 +19,7 @@ type Values struct {
 	MtlsCrt  string
 	MtlsKey  string
 	Mtls     bool
-	Addr     string
+	Address  string
 }
 
 func GenerateCertAndKeys(key, cert *os.File) error {
@@ -56,11 +56,11 @@ func GenerateCertAndKeys(key, cert *os.File) error {
 func GenerateConfigFile(fileName string, values Values) {
 	var Text = `# Definition of nodes
 node: &node
-  addr: {{ .Addr }}
+  addr: {{ .Address }}
   {{ if .Mtls }}
-  tls_ca_cert: {{.MtlsCrt}}
-  tls_ca_key: {{.MtlsKey}}
-  tls_ca_root: {{.MtlsCrt}}
+  tlsCACert: {{.MtlsCrt}}
+  tlsCAKey: {{.MtlsKey}}
+  tlsCARoot: {{.MtlsCrt}}
   {{ end }}
 # Nodes to interact with
 endorsers:
@@ -70,10 +70,10 @@ orderer: *node
 channel: test-channel
 chaincode: test-chaincode
 mspid: Org1MSP
-private_key: {{.PrivSk}}
-sign_cert: {{.SignCert}}
-num_of_conn: 10
-client_per_conn: 10
+privateKey: {{.PrivSk}}
+signCert: {{.SignCert}}
+connNum: 10
+clientPerConnNum: 10
 `
 	tmpl, err := template.New("test").Parse(Text)
 	if err != nil {

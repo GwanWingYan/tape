@@ -9,108 +9,125 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	noSuchItemError = errors.New("No such item")
+)
+
 type Config struct {
-	Endorsers  []Node   `yaml:"endorsers"`
-	Committer  Node     `yaml:"committer"`
-	Orderer    Node     `yaml:"orderer"`
-	Channel    string   `yaml:"channel"`
-	Chaincode  string   `yaml:"chaincode"`
-	Version    string   `yaml:"version"`
-	Args       []string `yaml:"args"`
-	MSPID      string   `yaml:"mspid"`
-	PrivateKey string   `yaml:"private_key"`
-	SignCert   string   `yaml:"sign_cert"`
+	// Network
+	Endorsers []Node `yaml:"endorsers"` // peers
+	Committer Node   `yaml:"committer"` // the peer chosen to observe blocks from
+	Orderer   Node   `yaml:"orderer"`   // orderer
+	Channel   string `yaml:"channel"`   // name of the channel to be operated on
 
-	NumOfConn      int `yaml:"num_of_conn"`
-	ClientPerConn  int `yaml:"client_per_conn"`
-	Threads        int `yaml:"threads"`
-	OrdererClients int `yaml:"orderer_clients"`
-	EndorserGroups int `yaml:"endorser_groups"`
+	// Chaincode
+	Chaincode string   `yaml:"chaincode"` // chaincode name
+	Version   string   `yaml:"version"`   // chaincode version
+	Args      []string `yaml:"args"`      // chaincode arguments
 
-	Check_Txid  bool `yaml:"check_txid"`
-	Check_rwset bool `yaml:"check_rwset"`
-	End2end     bool `yaml:"e2e"`
+	// Client identity
+	MSPID      string `yaml:"mspid"`      // the MSP the client belongs
+	PrivateKey string `yaml:"privateKey"` // client's private key
+	SignCert   string `yaml:"signCert"`   // client's certificate
 
-	NumOfTransactions  int    `yaml:"num_of_transactions"`
-	TimeOfTransactions int    `yaml:"time_of_transactions"`
-	TxType             string `yaml:"tx_type"`
+	End2End bool `yaml:"e2e"` // running mode
 
-	Rate  float64 `yaml:"rate"`
-	Burst int     `yaml:"burst"`
+	Rate  float64 `yaml:"rate"`  // average speed of transaction generation
+	Burst float64 `yaml:"burst"` // maximum speed of transaction generation
 
-	Logdir string `yaml:"logdir"`
-	Seed   int    `yaml:"seed"`
+	TxNum  int    `yaml:"txNum"`  // number of transactions
+	TxTime int    `yaml:"txTime"` // maximum execution time
+	TxType string `yaml:"txType"` // transaction type ['put', 'conflict']
+
+	ConnNum          int `yaml:"connNum"`          // number of connection
+	ClientPerConnNum int `yaml:"clientPerConnNum"` // number of client per connection
+	SignerNum        int `yaml:"signerNum"`        // number of signer
+	IntegratorNum    int `yaml:"integratorNum"`    // number of integrator
+	BroadcasterNum   int `yaml:"broadcasterNum"`   // number of orderer client
+	EndorserNum      int // number of endorsers
+	EndorserGroupNum int `yaml:"endorserGroupNum"` // number of endorser group
+
+	// If true, let the protoutil generate txid automatically
+	// If false, encode the txid by us
+	// WARNING: Must modify the code in core/endorser/msgvalidation.go:Validate() and
+	// protoutil/proputils.go:ComputeTxID (v2) before compilation
+	CheckTxID bool `yaml:"checkTxID"`
+
+	// If true, print the read set and write set to STDOUT
+	CheckRWSet bool `yaml:"checkRWSet"`
+
+	LogPath string `yaml:"logPath"` // path of the log file
+	Seed    int    `yaml:"seed"`    // random seed
 }
 
 type Node struct {
-	Addr          string `yaml:"addr"`
-	TLSCACert     string `yaml:"tls_ca_cert"`
-	TLSCAKey      string `yaml:"tls_ca_key"`
-	TLSCARoot     string `yaml:"tls_ca_root"`
+	Address       string `yaml:"address"`
+	TLSCACert     string `yaml:"tlsCACert"`
+	TLSCAKey      string `yaml:"tlsCAKey"`
+	TLSCARoot     string `yaml:"tlsCARoot"`
 	TLSCACertByte []byte
 	TLSCAKeyByte  []byte
 	TLSCARootByte []byte
 }
 
-func LoadConfig(f string) (Config, error) {
-	config := Config{}
+func LoadConfigFile(config *Config, f string) error {
+
 	raw, err := ioutil.ReadFile(f)
 	if err != nil {
-		return config, errors.Wrapf(err, "error loading %s", f)
+		return errors.Wrapf(err, "error loading %s", f)
 	}
 	err = yaml.Unmarshal(raw, &config)
 	if err != nil {
-		return config, errors.Wrapf(err, "error unmarshal %s", f)
+		return errors.Wrapf(err, "error unmarshal %s", f)
 	}
 
 	for i := range config.Endorsers {
 		err = config.Endorsers[i].loadConfig()
 		if err != nil {
-			return config, err
+			return err
 		}
 	}
+	config.EndorserNum = len(config.Endorsers)
+
 	err = config.Committer.loadConfig()
 	if err != nil {
-		return config, err
+		return err
 	}
+
 	err = config.Orderer.loadConfig()
 	if err != nil {
-		return config, err
+		return err
 	}
-	return config, nil
+
+	return nil
 }
 
+// LoadCrypto loads the client specified in the configuration file
 func (c Config) LoadCrypto() (*Crypto, error) {
-	var allcerts []string
-	for _, p := range c.Endorsers {
-		allcerts = append(allcerts, p.TLSCACert)
-	}
-	allcerts = append(allcerts, c.Orderer.TLSCACert)
-
-	conf := CryptoConfig{
+	cc := CryptoConfig{
 		MSPID:    c.MSPID,
 		PrivKey:  c.PrivateKey,
 		SignCert: c.SignCert,
 	}
 
-	priv, err := GetPrivateKey(conf.PrivKey)
+	priv, err := GetPrivateKey(cc.PrivKey)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading priv key")
 	}
 
-	cert, certBytes, err := GetCertificate(conf.SignCert)
+	cert, certBytes, err := GetCertificate(cc.SignCert)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading certificate")
 	}
 
 	id := &msp.SerializedIdentity{
-		Mspid:   conf.MSPID,
+		Mspid:   cc.MSPID,
 		IdBytes: certBytes,
 	}
 
 	name, err := proto.Marshal(id)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error get msp id")
+		return nil, errors.Wrapf(err, "error getting msp id")
 	}
 
 	return &Crypto{
@@ -122,32 +139,37 @@ func (c Config) LoadCrypto() (*Crypto, error) {
 
 func GetTLSCACerts(file string) ([]byte, error) {
 	if len(file) == 0 {
-		return nil, nil
+		return nil, noSuchItemError
 	}
 
 	in, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading %s", file)
 	}
+
 	return in, nil
 }
 
+//TODO
 func (n *Node) loadConfig() error {
-	TLSCACert, err := GetTLSCACerts(n.TLSCACert)
-	if err != nil {
+	certByte, err := GetTLSCACerts(n.TLSCACert)
+	if err != nil && err != noSuchItemError {
 		return errors.Wrapf(err, "fail to load TLS CA Cert %s", n.TLSCACert)
 	}
-	certPEM, err := GetTLSCACerts(n.TLSCAKey)
-	if err != nil {
-		return errors.Wrapf(err, "fail to load TLS CA Key %s", n.TLSCAKey)
 
+	keyByte, err := GetTLSCACerts(n.TLSCAKey)
+	if err != nil && err != noSuchItemError {
+		return errors.Wrapf(err, "fail to load TLS CA Key %s", n.TLSCAKey)
 	}
-	TLSCARoot, err := GetTLSCACerts(n.TLSCARoot)
-	if err != nil {
+
+	rootByte, err := GetTLSCACerts(n.TLSCARoot)
+	if err != nil && err != noSuchItemError {
 		return errors.Wrapf(err, "fail to load TLS CA Root %s", n.TLSCARoot)
 	}
-	n.TLSCACertByte = TLSCACert
-	n.TLSCAKeyByte = certPEM
-	n.TLSCARootByte = TLSCARoot
+
+	n.TLSCACertByte = certByte
+	n.TLSCAKeyByte = keyByte
+	n.TLSCARootByte = rootByte
+
 	return nil
 }

@@ -19,21 +19,21 @@ func StartMockPeer() (*mock.Server, string) {
 	return mockPeer, lis.Addr().String()
 }
 
-func StartProposer(signed, processed chan *Elements, done chan struct{}, logger *log.Logger, threshold int, addr string) {
+func StartProposer(signed, processed chan *Element, done chan struct{}, logger *log.Logger, threshold int, addr string) {
 	peer := Node{
 		Addr: addr,
 	}
-	Proposer, _ := CreateProposer(peer, logger)
+	Proposer, _ := NewProposer(peer, logger)
 	go Proposer.Start(signed, processed, done, threshold)
 }
 
 func benchmarkNPeer(concurrent int, b *testing.B) {
-	processed := make(chan *Elements, 10)
+	processed := make(chan *Element, 10)
 	done := make(chan struct{})
 	defer close(done)
-	signeds := make([]chan *Elements, concurrent)
+	signeds := make([]chan *Element, concurrent)
 	for i := 0; i < concurrent; i++ {
-		signeds[i] = make(chan *Elements, 10)
+		signeds[i] = make(chan *Element, 10)
 		mockpeer, mockpeeraddr := StartMockPeer()
 		StartProposer(signeds[i], processed, done, nil, concurrent, mockpeeraddr)
 		defer mockpeer.Stop()
@@ -42,7 +42,7 @@ func benchmarkNPeer(concurrent int, b *testing.B) {
 	b.ResetTimer()
 	go func() {
 		for i := 0; i < b.N; i++ {
-			data := &Elements{SignedProp: &peer.SignedProposal{}}
+			data := &Element{SignedProp: &peer.SignedProposal{}}
 			for _, s := range signeds {
 				s <- data
 			}

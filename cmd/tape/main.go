@@ -12,98 +12,83 @@ import (
 )
 
 const (
-	loglevel = "TAPE_LOGLEVEL"
+	logLevelEnv = "TAPE_LOGLEVEL"
+)
+
+var (
+	logger  *log.Logger
+	config  *infra.Config
+	fullCmd string
 )
 
 var (
 	app = kingpin.New("tape", "A performance test tool for Hyperledger Fabric")
 
-	run = app.Command("run", "Start the tape program").Default()
-	con = run.Flag("config", "Path to config file").Required().Short('c').String()
-
-	seed  = run.Flag("seed", "seed").Default("0").Int()
-	rate  = run.Flag("rate", "[Optional] Creates tx rate, default 0 as unlimited").Default("0").Float64()
-	burst = run.Flag("burst", "[Optional] Burst size for Tape, should bigger than rate").Default("1000").Int()
-	e2e   = run.Flag("e2e", "end to end").Default("true").Bool()
-
-	num_of_conn     = run.Flag("num_of_conn", "number of connections").Default("16").Int()
-	client_per_conn = run.Flag("client_per_conn", "clients per connection").Default("16").Int()
-	orderer_client  = run.Flag("orderer_client", "orderer clients").Default("20").Int()
-	threads         = run.Flag("thread", "signature thread").Default("1").Int()
-	endorser_groups = run.Flag("endorser_group", "endorser groups").Required().Int()
-
-	num_of_transactions  = run.Flag("number", "Number of tx for shot").Default("50000").Short('n').Int()
-	time_of_transactions = run.Flag("time", "time of tx for shot (default 120s)").Default("120").Short('t').Int()
-	tx_type              = run.Flag("txtype", "transaction type [put, conflict]").Required().String()
-
+	run     = app.Command("run", "Start the tape program").Default()
 	version = app.Command("version", "Show version information")
+
+	configFile = run.Flag("config", "Path to config file").Required().Short('c').String()
 )
 
-func loadConfig() infra.Config {
-	config, err := infra.LoadConfig(*con)
+func newLogger() *log.Logger {
+	logger = log.New()
+	logger.SetLevel(log.InfoLevel)
+	if value, ok := os.LookupEnv(logLevelEnv); ok {
+		if level, err := log.ParseLevel(value); err == nil {
+			logger.SetLevel(level)
+		}
+	}
+	return logger
+}
+
+func loadConfig() *infra.Config {
+	config = &infra.Config{}
+	err := infra.LoadConfigFile(config, *configFile)
 	if err != nil {
 		log.Fatalf("load config error: %v\n", err)
 	}
-	config.Seed = *seed
-	config.Rate = *rate
-	config.Burst = *burst
-	config.End2end = *e2e
-	config.ClientPerConn = *client_per_conn
-	config.NumOfConn = *num_of_conn
-	config.OrdererClients = *orderer_client
-	config.Threads = *threads
-	config.EndorserGroups = *endorser_groups
-	config.NumOfTransactions = *num_of_transactions
-	config.TimeOfTransactions = *time_of_transactions
-	config.TxType = *tx_type
-
 	return config
+}
+
+func checkArgs() {
+	if config.Rate < 0 {
+		logger.Errorf("tape: error: rate %f is not a zero (unlimited) or positive number\n", config.Rate)
+		os.Exit(1)
+	}
+
+	if config.Burst < 1 {
+		logger.Errorf("tape: error: burst %d is not greater than 1\n", config.Burst)
+		os.Exit(1)
+	}
+
+	if config.Rate > config.Burst {
+		fmt.Printf("rate %f is bigger than burst %f, so set rate to burst\n", config.Rate, config.Burst)
+		config.Rate = config.Burst
+	}
 }
 
 func main() {
 	var err error
 
-	logger := log.New()
-	logger.SetLevel(log.WarnLevel)
-	if customerLevel, customerSet := os.LookupEnv(loglevel); customerSet {
-		if lvl, err := log.ParseLevel(customerLevel); err == nil {
-			logger.SetLevel(lvl)
-		}
-	}
+	fullCmd = kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	fullCmd := kingpin.MustParse(app.Parse(os.Args[1:]))
+	logger = newLogger()
+
+	config = loadConfig()
+
 	switch fullCmd {
+	case run.FullCommand():
+		checkArgs()
+		err = infra.Process(config, logger)
 	case version.FullCommand():
 		fmt.Printf(infra.GetVersionInfo())
-	case run.FullCommand():
-		checkArgs(rate, burst, logger)
-		config := loadConfig()
-		err = infra.Process(config, logger)
 	default:
 		err = errors.Errorf("invalid command: %s", fullCmd)
 	}
 
 	if err != nil {
-		logger.Error(err)
+		logger.Errorln(err)
 		os.Exit(1)
 	}
 	os.Exit(0)
-}
-
-func checkArgs(rate *float64, burst *int, logger *log.Logger) {
-	if *rate < 0 {
-		os.Stderr.WriteString("tape: error: rate must be zero (unlimited) or positive number\n")
-		os.Exit(1)
-	}
-	if *burst < 1 {
-		os.Stderr.WriteString("tape: error: burst at least 1\n")
-		os.Exit(1)
-	}
-
-	if int64(*rate) > int64(*burst) {
-		fmt.Printf("As rate %d is bigger than burst %d, real rate is burst\n", int64(*rate), int64(*burst))
-	}
-
-	logger.Infof("Will use rate %f as send rate\n", *rate)
-	logger.Infof("Will use %d as burst\n", burst)
 }

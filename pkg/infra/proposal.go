@@ -25,51 +25,55 @@ func getRandomNonce() ([]byte, error) {
 	return key, nil
 }
 
-func CreateProposal(txid string, signer *Crypto, channel, ccname, version string, args []string) (*peer.Proposal, string, error) {
-	var argsInByte [][]byte
+// CreateProposal creates an unsigned proposal based on the given information and returns a proposal and its transaction id
+func CreateProposal(txid string, channel, ccname, version string, args []string) (*peer.Proposal, string, error) {
+	// convert the argument list to a byte list
+	var argsByte [][]byte
 	for _, arg := range args {
-		argsInByte = append(argsInByte, []byte(arg))
+		argsByte = append(argsByte, []byte(arg))
 	}
 
+	// create an chaincode invocation object
 	spec := &peer.ChaincodeSpec{
 		Type:        peer.ChaincodeSpec_GOLANG,
 		ChaincodeId: &peer.ChaincodeID{Name: ccname, Version: version},
-		Input:       &peer.ChaincodeInput{Args: argsInByte},
+		Input:       &peer.ChaincodeInput{Args: argsByte},
 	}
-
 	invocation := &peer.ChaincodeInvocationSpec{ChaincodeSpec: spec}
 
-	creator, err := signer.Serialize()
+	// use the client's identity provided in the configuration file
+	creator, err := identity.Serialize()
 	if err != nil {
 		return nil, "", err
 	}
 
 	if txid == "" {
+		// if transaction id is not provided, let the protoutil decides the ID
 		prop, txid, err := protoutil.CreateChaincodeProposal(common.HeaderType_ENDORSER_TRANSACTION, channel, invocation, creator)
 		if err != nil {
 			return nil, "", err
 		}
 		return prop, txid, nil
 	} else {
-		// disable txid check in core/endorser/msgvalidation.go:Validate and
-		// protoutil/proputils.go:ComputeTxID (v2)
+		// To use a customized ID, we MUST disable txid check in
+		// core/endorser/msgvalidation.go:Validate and protoutil/proputils.go:ComputeTxID (v2)
 		nonce, err := getRandomNonce()
 		prop, txid, err := protoutil.CreateChaincodeProposalWithTxIDNonceAndTransient(txid, common.HeaderType_ENDORSER_TRANSACTION, channel, invocation, nonce, creator, nil)
 		if err != nil {
 			return nil, "", err
 		}
 		return prop, txid, nil
-
 	}
 }
 
-func SignProposal(prop *peer.Proposal, signer *Crypto) (*peer.SignedProposal, error) {
+// SignProposal signs an unsigned proposal and attach the signature to the signed proposal
+func SignProposal(prop *peer.Proposal) (*peer.SignedProposal, error) {
 	propBytes, err := proto.Marshal(prop)
 	if err != nil {
 		return nil, err
 	}
 
-	sig, err := signer.Sign(propBytes)
+	sig, err := identity.Sign(propBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +81,8 @@ func SignProposal(prop *peer.Proposal, signer *Crypto) (*peer.SignedProposal, er
 	return &peer.SignedProposal{ProposalBytes: propBytes, Signature: sig}, nil
 }
 
-func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.ProposalResponse, check_rwset bool) (*common.Envelope, error) {
+// CreateSignedTx extract response and signs and generates an envelope
+func CreateSignedTx(proposal *peer.Proposal, resps []*peer.ProposalResponse) (*common.Envelope, error) {
 	if len(resps) == 0 {
 		return nil, errors.Errorf("at least one proposal response is required")
 	}
@@ -96,7 +101,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 
 	// check that the signer is the same that is referenced in the header
 	// TODO: maybe worth removing?
-	signerBytes, err := signer.Serialize()
+	identityBytes, err := identity.Serialize()
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +111,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 		return nil, err
 	}
 
-	if bytes.Compare(signerBytes, shdr.Creator) != 0 {
+	if bytes.Compare(identityBytes, shdr.Creator) != 0 {
 		return nil, errors.Errorf("signer must be the same as the one referenced in the header")
 	}
 
@@ -132,7 +137,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 		}
 		endorsements = append(endorsements, r.Endorsement)
 	}
-	if check_rwset {
+	if config.CheckRWSet {
 		// dd: open rwset to do some check
 		pRespPayload, err := protoutil.UnmarshalProposalResponsePayload(a1)
 		if err != nil {
@@ -162,6 +167,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 			}
 		}
 	}
+
 	// create ChaincodeEndorsedAction
 	cea := &peer.ChaincodeEndorsedAction{ProposalResponsePayload: a1, Endorsements: endorsements}
 
@@ -197,7 +203,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 	}
 
 	// sign the payload
-	sig, err := signer.Sign(paylBytes)
+	sig, err := identity.Sign(paylBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +211,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 	return &common.Envelope{Payload: paylBytes, Signature: sig}, nil
 }
 
-func CreateSignedDeliverNewestEnv(ch string, signer *Crypto) (*common.Envelope, error) {
+func CreateSignedDeliverNewestEnv() (*common.Envelope, error) {
 	start := &orderer.SeekPosition{
 		Type: &orderer.SeekPosition_Newest{
 			Newest: &orderer.SeekNewest{},
@@ -228,8 +234,8 @@ func CreateSignedDeliverNewestEnv(ch string, signer *Crypto) (*common.Envelope, 
 
 	return protoutil.CreateSignedEnvelope(
 		common.HeaderType_DELIVER_SEEK_INFO,
-		ch,
-		signer,
+		config.Channel,
+		identity,
 		seekInfo,
 		0,
 		0,

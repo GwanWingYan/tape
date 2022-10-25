@@ -9,7 +9,7 @@ import (
 	"github.com/GwanWingYan/fabric-protos-go/peer"
 )
 
-type Elements struct {
+type Element struct {
 	Proposal   *peer.Proposal
 	SignedProp *peer.SignedProposal
 	Responses  []*peer.ProposalResponse
@@ -25,12 +25,12 @@ type Assembler struct {
 	Conf           Config
 }
 
-func (a *Assembler) Assemble(e *Elements) (*Elements, error) {
+func (a *Assembler) Assemble(e *Element) (*Element, error) {
 	e, err := a.assemble(e)
 	return e, err
 }
-func (a *Assembler) assemble(e *Elements) (*Elements, error) {
-	env, err := CreateSignedTx(e.Proposal, a.Signer, e.Responses, a.Conf.Check_rwset)
+func (a *Assembler) assemble(e *Element) (*Element, error) {
+	env, err := CreateSignedTx(e.Proposal, a.Signer, e.Responses, a.Conf.CheckRWSet)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (a *Assembler) assemble(e *Elements) (*Elements, error) {
 	return e, nil
 }
 
-func (a *Assembler) sign(e *Elements) (*Elements, error) {
+func (a *Assembler) sign(e *Element) (*Element, error) {
 	sprop, err := SignProposal(e.Proposal, a.Signer)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (a *Assembler) sign(e *Elements) (*Elements, error) {
 	return e, nil
 }
 
-func (a *Assembler) StartSigner(raw chan *Elements, signed []chan *Elements, errorCh chan error, done <-chan struct{}) {
+func (a *Assembler) StartSigner(raw chan *Element, signed []chan *Element, errorCh chan error, done <-chan struct{}) {
 	endorsers_per_group := int(len(signed) / a.EndorserGroups)
 	// rand.Seed(666)
 	for {
@@ -73,7 +73,7 @@ func (a *Assembler) StartSigner(raw chan *Elements, signed []chan *Elements, err
 	}
 }
 
-func (a *Assembler) StartIntegrator(processed, envs chan *Elements, errorCh chan error, done <-chan struct{}) {
+func (a *Assembler) StartIntegrator(processed, envs chan *Element, errorCh chan error, done <-chan struct{}) {
 	for {
 		select {
 		case p := <-processed:

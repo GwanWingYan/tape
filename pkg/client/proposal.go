@@ -77,7 +77,7 @@ func SignProposal(prop *peer.Proposal, signer *Crypto) (*peer.SignedProposal, er
 	return &peer.SignedProposal{ProposalBytes: propBytes, Signature: sig}, nil
 }
 
-func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.ProposalResponse, check_rwset bool) (*common.Envelope, error) {
+func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.ProposalResponse, checkRWSet bool) (*common.Envelope, error) {
 	if len(resps) == 0 {
 		return nil, errors.Errorf("at least one proposal response is required")
 	}
@@ -132,7 +132,7 @@ func CreateSignedTx(proposal *peer.Proposal, signer *Crypto, resps []*peer.Propo
 		}
 		endorsements = append(endorsements, r.Endorsement)
 	}
-	if check_rwset {
+	if checkRWSet {
 		// dd: open rwset to do some check
 		pRespPayload, err := protoutil.UnmarshalProposalResponsePayload(a1)
 		if err != nil {

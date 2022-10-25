@@ -14,13 +14,13 @@ func generateConfigFile(FileName string, values interface{}) {
 	var Text = `# Definition of nodes
 org1peer0: &org1peer0
   addr: peer0.org1.example.com:7051
-  tls_ca_cert: {{.TlsFile}}
+  tlsCACert: {{.TlsFile}}
 org2peer0: &org2peer0
   addr: peer0.org2.example.com:7051
-  tls_ca_cert: {{.TlsFile}}
+  tlsCACert: {{.TlsFile}}
 org0orderer0: &org0orderer0
   addr: orderer.example.com:7050
-  tls_ca_cert: {{.TlsFile}}
+  tlsCACert: {{.TlsFile}}
 
 endorsers:
   - *org1peer0
@@ -36,10 +36,10 @@ args:
   - b
   - 1
 mspid: Org1MSP
-private_key: /path/to/private.key
-sign_cert: /path/to/sign.cert
-num_of_conn: 20
-client_per_conn: 40
+privateKey: /path/to/private.key
+signCert: /path/to/sign.cert
+connNum: 20
+clientPerConnNum: 40
 `
 	tmpl, err := template.New("test").Parse(Text)
 	if err != nil {
@@ -72,24 +72,24 @@ var _ = Describe("Config", func() {
 
 			generateConfigFile(f.Name(), struct{ TlsFile string }{tlsFile.Name()})
 
-			c, err := infra.LoadConfig(f.Name())
+			c, err := infra.LoadConfigFile(f.Name())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(c).To(Equal(infra.Config{
 				Endorsers: []infra.Node{
 					{Addr: "peer0.org1.example.com:7051", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
 					{Addr: "peer0.org2.example.com:7051", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
 				},
-				Committer:     infra.Node{Addr: "peer0.org2.example.com:7051", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
-				Orderer:       infra.Node{Addr: "orderer.example.com:7050", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
-				Channel:       "mychannel",
-				Chaincode:     "mycc",
-				Version:       "",
-				Args:          []string{"invoke", "a", "b", "1"},
-				MSPID:         "Org1MSP",
-				PrivateKey:    "/path/to/private.key",
-				SignCert:      "/path/to/sign.cert",
-				NumOfConn:     20,
-				ClientPerConn: 40,
+				Committer:        infra.Node{Addr: "peer0.org2.example.com:7051", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
+				Orderer:          infra.Node{Addr: "orderer.example.com:7050", TLSCACert: tlsFile.Name(), TLSCACertByte: []byte("a")},
+				Channel:          "mychannel",
+				Chaincode:        "mycc",
+				Version:          "",
+				Args:             []string{"invoke", "a", "b", "1"},
+				MSPID:            "Org1MSP",
+				PrivateKey:       "/path/to/private.key",
+				SignCert:         "/path/to/sign.cert",
+				ConnNum:          20,
+				ClientPerConnNum: 40,
 			}))
 			_, err = c.LoadCrypto()
 			Expect(err).Should(MatchError(ContainSubstring("error loading priv key")))
@@ -98,7 +98,7 @@ var _ = Describe("Config", func() {
 
 	Context("bad", func() {
 		It("fails to load missing config file", func() {
-			_, err := infra.LoadConfig("invalid_file")
+			_, err := infra.LoadConfigFile("invalid_file")
 			Expect(err).Should(MatchError(ContainSubstring("invalid_file")))
 		})
 
@@ -109,7 +109,7 @@ var _ = Describe("Config", func() {
 
 			generateConfigFile(f.Name(), struct{ TlsFile string }{"invalid_file"})
 
-			_, err := infra.LoadConfig(f.Name())
+			_, err := infra.LoadConfigFile(f.Name())
 			Expect(err).Should(MatchError(ContainSubstring("invalid_file")))
 		})
 	})

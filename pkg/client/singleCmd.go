@@ -21,7 +21,7 @@ func RunSingleCmd(config Config, txn []string) {
 		panic(fmt.Sprintf("load crypto failed: %v", err))
 	}
 
-	e2eCh := make(chan *Tracker, MAX_BUF)
+	e2eCh := make(chan *Tracker, CH_MAX_CAPACITY)
 
 	resub := make(chan string, 10000)
 	viper.SetDefault("clientsNumber", len(config.Endorsers)*viper.GetInt("clientsPerEndorser"))

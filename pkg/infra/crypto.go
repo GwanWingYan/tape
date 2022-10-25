@@ -35,6 +35,7 @@ type Crypto struct {
 	SignCert *x509.Certificate
 }
 
+// Sign signs the digest of a byte array (typically an unsigned proposal)
 func (s *Crypto) Sign(message []byte) ([]byte, error) {
 	ri, si, err := ecdsa.Sign(rand.Reader, s.PrivKey, digest(message))
 	if err != nil {
@@ -142,6 +143,7 @@ func PEMtoPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
 	}
 	return cert, err
 }
+
 func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {
 	in, err := ioutil.ReadFile(f)
 	if err != nil {

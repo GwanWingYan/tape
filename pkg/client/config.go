@@ -18,35 +18,36 @@ type Config struct {
 	Version    string   `yaml:"version"`
 	Args       []string `yaml:"args"`
 	MSPID      string   `yaml:"mspid"`
-	PrivateKey string   `yaml:"private_key"`
-	SignCert   string   `yaml:"sign_cert"`
+	PrivateKey string   `yaml:"privateKey"`
+	SignCert   string   `yaml:"signCert"`
 
-	NumOfConn      int `yaml:"num_of_conn"`
-	ClientPerConn  int `yaml:"client_per_conn"`
-	Threads        int `yaml:"threads"`
-	OrdererClients int `yaml:"orderer_clients"`
-	EndorserGroups int `yaml:"endorser_groups"`
+	ConnNum        int `yaml:"connNum"`
+	ClientPerConn  int `yaml:"clientPerConnNum"`
+	SignerNum      int `yaml:"signerNum"`
+	IntegratorNum  int `yaml:"integratorNum"`
+	OrdererClients int `yaml:"broadcasterNum"`
+	EndorserGroups int `yaml:"endorserGroupNum"`
 
-	Check_Txid  bool `yaml:"check_txid"`
-	Check_rwset bool `yaml:"check_rwset"`
-	End2end     bool `yaml:"e2e"`
+	CheckTxID  bool `yaml:"checkTxID"`
+	CheckRWSet bool `yaml:"checkRWSet"`
+	End2End    bool `yaml:"e2e"`
 
-	NumOfTransactions  int    `yaml:"num_of_transactions"`
-	TimeOfTransactions int    `yaml:"time_of_transactions"`
-	TxType             string `yaml:"tx_type"`
+	TxNum  int    `yaml:"txNum"`
+	TxTime int    `yaml:"txTime"`
+	TxType string `yaml:"txType"`
 
 	Rate  float64 `yaml:"rate"`
 	Burst int     `yaml:"burst"`
 
-	Logdir string `yaml:"logdir"`
-	Seed   int    `yaml:"seed"`
+	LogPath string `yaml:"logPath"`
+	Seed    int    `yaml:"seed"`
 }
 
 type Node struct {
-	Addr          string `yaml:"addr"`
-	TLSCACert     string `yaml:"tls_ca_cert"`
-	TLSCAKey      string `yaml:"tls_ca_key"`
-	TLSCARoot     string `yaml:"tls_ca_root"`
+	Address       string `yaml:"addr"`
+	TLSCACert     string `yaml:"tlsCACert"`
+	TLSCAKey      string `yaml:"tlsCAKey"`
+	TLSCARoot     string `yaml:"tlsCARoot"`
 	TLSCACertByte []byte
 	TLSCAKeyByte  []byte
 	TLSCARootByte []byte
@@ -63,7 +64,7 @@ func LoadConfig(f string) (Config, error) {
 		return config, errors.Wrapf(err, "error unmarshal %s", f)
 	}
 
-	for i, _ := range config.Endorsers {
+	for i := range config.Endorsers {
 		err = config.Endorsers[i].loadConfig()
 		if err != nil {
 			return config, err
@@ -133,21 +134,25 @@ func GetTLSCACerts(file string) ([]byte, error) {
 }
 
 func (n *Node) loadConfig() error {
-	TLSCACert, err := GetTLSCACerts(n.TLSCACert)
+	certByte, err := GetTLSCACerts(n.TLSCACert)
 	if err != nil {
 		return errors.Wrapf(err, "fail to load TLS CA Cert %s", n.TLSCACert)
 	}
-	certPEM, err := GetTLSCACerts(n.TLSCAKey)
+
+	keyByte, err := GetTLSCACerts(n.TLSCAKey)
 	if err != nil {
 		return errors.Wrapf(err, "fail to load TLS CA Key %s", n.TLSCAKey)
 
 	}
-	TLSCARoot, err := GetTLSCACerts(n.TLSCARoot)
+
+	rootByte, err := GetTLSCACerts(n.TLSCARoot)
 	if err != nil {
 		return errors.Wrapf(err, "fail to load TLS CA Root %s", n.TLSCARoot)
 	}
-	n.TLSCACertByte = TLSCACert
-	n.TLSCAKeyByte = certPEM
-	n.TLSCARootByte = TLSCARoot
+
+	n.TLSCACertByte = certByte
+	n.TLSCAKeyByte = keyByte
+	n.TLSCARootByte = rootByte
+
 	return nil
 }

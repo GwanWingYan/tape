@@ -54,11 +54,11 @@ var _ = Describe("Initiator", func() {
 	It("should crete proposal to raw without limit when limit is 0", func() {
 		logger := log.New()
 
-		raw := make(chan *infra.Elements, 1002)
+		raw := make(chan *infra.Element, 1002)
 		defer close(raw)
 		errorCh := make(chan error, 1002)
 		defer close(errorCh)
-		config, err := infra.LoadConfig(configFile.Name())
+		config, err := infra.LoadConfigFile(configFile.Name())
 		Expect(err).NotTo(HaveOccurred())
 		crypto, err := config.LoadCrypto()
 		Expect(err).NotTo(HaveOccurred())
@@ -73,11 +73,11 @@ var _ = Describe("Initiator", func() {
 	It("should crete proposal to raw with given limit bigger than 0 less than size", func() {
 		logger := log.New()
 
-		raw := make(chan *infra.Elements, 1002)
+		raw := make(chan *infra.Element, 1002)
 		defer close(raw)
 		errorCh := make(chan error, 1002)
 		defer close(errorCh)
-		config, err := infra.LoadConfig(configFile.Name())
+		config, err := infra.LoadConfigFile(configFile.Name())
 		Expect(err).NotTo(HaveOccurred())
 		crypto, err := config.LoadCrypto()
 		Expect(err).NotTo(HaveOccurred())
@@ -91,11 +91,11 @@ var _ = Describe("Initiator", func() {
 	It("should crete proposal to raw with given limit bigger than Size", func() {
 		logger := log.New()
 
-		raw := make(chan *infra.Elements, 1002)
+		raw := make(chan *infra.Element, 1002)
 		defer close(raw)
 		errorCh := make(chan error, 1002)
 		defer close(errorCh)
-		config, err := infra.LoadConfig(configFile.Name())
+		config, err := infra.LoadConfigFile(configFile.Name())
 		Expect(err).NotTo(HaveOccurred())
 		crypto, err := config.LoadCrypto()
 		Expect(err).NotTo(HaveOccurred())

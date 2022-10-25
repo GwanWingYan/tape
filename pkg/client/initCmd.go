@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	metricsSystem *operations.System
-	MAX_BUF       = 100010
+	metricsSystem   *operations.System
+	CH_MAX_CAPACITY = 100010
 )
 
 func RunInitCmd(config Config) {
@@ -38,7 +38,7 @@ func runCmd(config Config) {
 		panic(fmt.Sprintf("load crypto failed: %v", err))
 	}
 
-	e2eCh := make(chan *Tracker, MAX_BUF)
+	e2eCh := make(chan *Tracker, CH_MAX_CAPACITY)
 
 	observer, err := NewObserver(
 		viper.GetString("channel"),

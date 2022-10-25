@@ -40,24 +40,24 @@ Modify `config.yaml` according to your network. This is a sample:
 ```yaml
 endorsers:
   - addr: localhost:7051
-    tls_ca_cert: /path/to/peer1/tls/ca/cert
+    tlsCACert: /path/to/peer1/tls/ca/cert
   - addr: localhost:7051
-    tls_ca_cert: /path/to/peer2/tls/ca/cert
+    tlsCACert: /path/to/peer2/tls/ca/cert
 committer:
   addr: localhost:7051
-  tls_ca_cert: /path/to/peer2/tls/ca/cert
+  tlsCACert: /path/to/peer2/tls/ca/cert
 orderer:
   addr: localhost:7050
-  tls_ca_cert: /path/to/orderer/tls/ca/cert
+  tlsCACert: /path/to/orderer/tls/ca/cert
 channel: mychannel
 chaincode: basic
 args:
   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
-sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
-num_of_conn: 10
-client_per_conn: 10
+privateKey: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
+signCert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
+connNum: 10
+clientPerConnNum: 10
 ```
 
 `endorsers`: include the addr and tls ca cert of peers. Peer address is in IP:Port format. You may need to add peer name, i.e. `peer0.org1.example.com,peer0.org2.example.com` to your `/etc/hosts`
@@ -70,12 +70,12 @@ This tool sends traffic as a Fabric user, and requires following configs
 
 `mspid`: MSP ID that the user is associated to
 
-`private_key`: path to the private key. If you are using BYFN as your base, this can be:
+`privateKey`: path to the private key. If you are using BYFN as your base, this can be:
 ```
 crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
 ```
 
-`sign_cert`: path to the user certificate. If you are using BYFN as your base, this can be:
+`signCert`: path to the user certificate. If you are using BYFN as your base, this can be:
 ```
 crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
 ```
@@ -88,9 +88,9 @@ crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/ms
 
 `args`: arguments to send with invocation, depending on your chaincode implementation. The chaincode used by this sample can be found in `chaincodes/sample.go`
 
-`num_of_conn`: number of gRPC connection established between client/peer, client/orderer. If you think client has not put enough pressure on Fabric, increase this.
+`connNum`: number of gRPC connection established between client/peer, client/orderer. If you think client has not put enough pressure on Fabric, increase this.
 
-`client_per_conn`: number of clients per connection used to send proposals to peer. If you think client has not put enough pressure on Fabric, increase this.
+`clientPerConnNum`: number of clients per connection used to send proposals to peer. If you think client has not put enough pressure on Fabric, increase this.
 
 ### Run
 

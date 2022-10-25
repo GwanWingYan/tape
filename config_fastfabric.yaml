@@ -6,7 +6,7 @@ orderer1: &orderer1
   addr: orderer:7050
 
 # Nodes to interact with
-endorser_groups: 1
+endorserGroupNum: 1
 endorsers:
   - *peer1
 # we might support multi-committer in the future for more complex test scenario,
@@ -21,10 +21,10 @@ chaincode: smallbank
 # args:
 #   - GetAllAssets
 mspid: Org1MSP
-private_key: ./organizations/peerOrganizations/hlf.com/users/User1@hlf.com/msp/keystore/priv_sk
-sign_cert: ./organizations/peerOrganizations/hlf.com/users/User1@hlf.com/msp/signcerts/User1@hlf.com-cert.pem
-num_of_conn: 4
-client_per_conn: 4
+privateKey: ./organizations/peerOrganizations/hlf.com/users/User1@hlf.com/msp/keystore/priv_sk
+signCert: ./organizations/peerOrganizations/hlf.com/users/User1@hlf.com/msp/signcerts/User1@hlf.com-cert.pem
+connNum: 4
+clientPerConnNum: 4
 
-check_txid: true
-check_rwset: false
+checkTxID: true
+checkRWSet: false

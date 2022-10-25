@@ -857,7 +857,7 @@ func runMutualAuth(t *testing.T, servers []testServer, trustedClients, unTrusted
 		if err != nil {
 			return err
 		}
-		srvAddr := lis.Addr().String()
+		srvAddress := lis.Addr().String()
 
 		// create GRPCServer
 		srv, err := comm.NewGRPCServerFromListener(lis, servers[i].config)

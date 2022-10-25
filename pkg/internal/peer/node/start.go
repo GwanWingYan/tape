@@ -241,7 +241,7 @@ func serve(args []string) error {
 		return fmt.Errorf("peer address is not in the format of host:port: %v", err)
 	}
 
-	listenAddr := coreConfig.ListenAddress
+	listenAddress := coreConfig.ListenAddress
 	serverConfig, err := peer.GetServerConfig()
 	if err != nil {
 		logger.Fatalf("Error loading secure config for peer (%s)", err)

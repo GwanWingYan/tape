@@ -1,116 +1,172 @@
 package infra
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/GwanWingYan/fabric-protos-go/common"
 	log "github.com/sirupsen/logrus"
 )
 
-var endorsement_file = "ENDORSEMENT"
-var global_txid2id map[string]int
-
-var (
-	MAX_BUF         = 100010
-	buffer_start    = make(chan string, MAX_BUF) // start: timestamp txid clientid connectionid
-	buffer_proposal = make(chan string, MAX_BUF) // proposal: timestamp txid
-	buffer_sent     = make(chan string, MAX_BUF) // sent: timestamp txid
-	buffer_end      = make(chan string, MAX_BUF) // end: timestamp txid [VALID/MVCC]
-	buffer_tot      = make(chan string, MAX_BUF) // null
-	g_wg            = sync.WaitGroup{}
+const (
+	CH_MAX_CAPACITY     = 100010
+	endorsementFilename = "ENDORSEMENT.txt"
 )
 
-func print_benchmark(logdir string, done <-chan struct{}) {
-	g_wg.Add(1)
-	defer g_wg.Done()
-	f, err := os.Create(logdir)
+var (
+	txid2id  map[string]int
+	config   *Config
+	identity *Crypto
+	logger   *log.Logger
+	printCh  = make(chan string, CH_MAX_CAPACITY)
+	printWG  = sync.WaitGroup{}
+)
+
+var (
+	done     chan struct{}
+	finishCh chan struct{}
+	errorCh  chan error
+)
+
+func Process(c *Config, l *log.Logger) error {
+	txid2id = make(map[string]int)
+	config = c
+	logger = l
+
+	logger.Info("End To End")
+	return End2End()
+
+	// if config.End2End {
+	// 	fmt.Println("e2e")
+	// 	return e2e(config, logger)
+	// } else {
+	// 	if _, err := os.Stat(endorsementFilename); err == nil {
+	// 		fmt.Println("phase2")
+	// 		// phase2: broadcast transactions to order
+	// 		return breakdown_phase2(config, logger)
+	// 	} else {
+	// 		fmt.Println("phase1")
+	// 		// phase1: send proposals to endorsers {
+	// 		return breakdown_phase1(config, logger)
+	// 	}
+
+	// }
+}
+
+func printBenchmark(logPath string, done <-chan struct{}) {
+	printWG.Add(1)
+	defer printWG.Done()
+	f, err := os.Create(logPath)
 	if err != nil {
-		log.Fatalf("open log %s failed: %v\n", logdir, err)
+		logger.Fatalf("Failed to create log file %s: %v\n", logPath, err)
 	}
 	defer f.Close()
+
+	// Receive following types of elements:
+	// 		Start: timestamp txid-index txid  endorser-id, connection-id, client-id
+	// 		Proposal: timestamp txid-index txid  endorser-id, connection-id, client-id
+	// 		Broadcast: timestamp txid-index txid  broadcaster-id
+	// 		End: timestamp txid-index txid [VALID/MVCC]
+	// 		Number of all transactions: total-transaction-num
+	// 		Number of VALID transactions: valid-transaction-num
+	// 		Number of ABORTED transactions: aborted-transaction-num
+	// 		Abort rate: abort-rate
+	// 		Duration: duration
+	// 		TPS: throughput
 	for {
 		select {
-		case res := <-buffer_start:
-			f.WriteString(res + "\n")
-		case res := <-buffer_proposal:
-			f.WriteString(res + "\n")
-		case res := <-buffer_sent:
-			f.WriteString(res + "\n")
-		case res := <-buffer_end:
+		case res := <-printCh:
 			f.WriteString(res + "\n")
 		case <-done:
-			for len(buffer_start) > 0 {
-				f.WriteString(<-buffer_start + "\n")
-			}
-			for len(buffer_proposal) > 0 {
-				f.WriteString(<-buffer_proposal + "\n")
-			}
-			for len(buffer_sent) > 0 {
-				f.WriteString(<-buffer_sent + "\n")
-			}
-			for len(buffer_end) > 0 {
-				f.WriteString(<-buffer_end + "\n")
-			}
-			for len(buffer_tot) > 0 {
-				f.WriteString(<-buffer_tot + "\n")
+			for len(printCh) > 0 {
+				f.WriteString(<-printCh + "\n")
 			}
 			return
 		}
 	}
 }
 
-func e2e(config Config, logger *log.Logger) error {
-	crypto, err := config.LoadCrypto()
-	if err != nil {
-		return err
-	}
-	raw := make(chan *Elements, config.Burst)
-	signed := make([]chan *Elements, len(config.Endorsers))
-	processed := make(chan *Elements, config.Burst)
-	envs := make(chan *Elements, config.Burst)
-	done := make(chan struct{})
-	finishCh := make(chan struct{})
-	errorCh := make(chan error, config.Burst)
-	assember := &Assembler{Signer: crypto, EndorserGroups: config.EndorserGroups, Conf: config}
-	go print_benchmark(config.Logdir, done)
+// End2End executes end-to-end test on HLF
+// An Element (i.e. a transaction) will go through the following channels
+// unsignedCh -> signedCh -> endorsedCh -> integratedCh
+func End2End() error {
+	var err error
+	burst := int(config.Burst)
 
-	for i := 0; i < len(config.Endorsers); i++ {
-		signed[i] = make(chan *Elements, config.Burst)
-	}
-
-	for i := 0; i < config.Threads; i++ {
-		go assember.StartIntegrator(processed, envs, errorCh, done)
-	}
-
-	proposor, err := CreateProposers(config.NumOfConn, config.ClientPerConn, config.Endorsers, config.Burst, logger)
+	identity, err = config.LoadCrypto() // loads the client identity
 	if err != nil {
 		return err
 	}
 
-	broadcaster, err := CreateBroadcasters(config.OrdererClients, config.Orderer, config.Burst, logger)
+	unsignedCh := make(chan *Element, burst) // all unsigned transactions
+
+	// 'signedCh' are a set of channels
+	// one channel for one endorser and stores all signed but not yet endorsed transactions
+	signedCh := make([]chan *Element, config.EndorserNum)
+	for i := 0; i < config.EndorserNum; i++ {
+		signedCh[i] = make(chan *Element, burst)
+	}
+
+	// all endorsed but not yet extracted transactions
+	endorsedCh := make(chan *Element, burst)
+
+	// all endorsed transactions in envelope format
+	integratedCh := make(chan *Element, burst)
+
+	done = make(chan struct{})
+	finishCh = make(chan struct{})
+	errorCh = make(chan error, burst)
+
+	go printBenchmark(config.LogPath, done)
+
+	initiator, err := NewInitiator(unsignedCh)
 	if err != nil {
 		return err
 	}
 
-	observer, err := CreateObserver(config.Channel, config.Committer, crypto, logger)
+	signers, err := NewSigners(unsignedCh, signedCh)
 	if err != nil {
 		return err
 	}
-	StartCreateProposal(config, crypto, raw, errorCh, logger)
+
+	proposers, err := NewProposers(signedCh, endorsedCh)
+	if err != nil {
+		return err
+	}
+
+	integrators, err := NewIntegrators(endorsedCh, integratedCh)
+	if err != nil {
+		return err
+	}
+
+	broadcasters, err := NewBroadcasters(integratedCh)
+	if err != nil {
+		return err
+	}
+
+	observer, err := NewObserver()
+	if err != nil {
+		return err
+	}
+
+	proposers.Start()
+
+	integrators.Start()
+
+	broadcasters.Start()
+
+	observer.Start()
+
+	// Wait for all raw proposals to be inserted in the 'raw' channel
+	initiator.Start()
 	time.Sleep(10 * time.Second)
-	start := time.Now()
-	for i := 0; i < config.Threads; i++ {
-		go assember.StartSigner(raw, signed, errorCh, done)
-	}
-	proposor.Start(signed, processed, done, config)
-	broadcaster.Start(envs, config.Rate, errorCh, done)
-	go observer.Start(int32(config.NumOfTransactions), errorCh, finishCh, start, &assember.Abort)
 
+	// Timing starts
+	start := time.Now()
+	signers.Start()
+
+	// Wait for the end of execution
 	for {
 		select {
 		case err = <-errorCh:
@@ -118,177 +174,168 @@ func e2e(config Config, logger *log.Logger) error {
 		case <-finishCh:
 			duration := time.Since(start)
 			logger.Infof("Completed processing transactions.")
-			buffer_tot <- fmt.Sprintf("tx: %d, duration: %+v, tps: %f", config.NumOfTransactions, duration, float64(config.NumOfTransactions)/duration.Seconds())
-			buffer_tot <- fmt.Sprintf("abort rate because of the different ledger height: %d %.2f%%", assember.Abort, float64(assember.Abort)/float64(config.NumOfTransactions)*100)
+			printCh <- fmt.Sprintf("Number of all transactions: %d", config.TxNum)
+			printCh <- fmt.Sprintf("Number of VALID transactions: %d", int32(config.TxNum)-Metric.Abort)
+			printCh <- fmt.Sprintf("Number of ABORTED transactions: %d", Metric.Abort)
+			printCh <- fmt.Sprintf("Abort rate: %f", float64(Metric.Abort)/float64(config.TxNum)*100)
+			printCh <- fmt.Sprintf("Duration: %+v", duration)
+			printCh <- fmt.Sprintf("TPS: %f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
+
+			// Closing 'done', a channel which is never sent an element, is a common technique to notify ending in Golang
+			// More information: https://go101.org/article/channel-use-cases.html#check-closed-status
 			close(done)
-			g_wg.Wait()
+
+			// Wait for printBenchmark to return
+			printWG.Wait()
+
 			return nil
 		}
 	}
 }
 
-func breakdown_phase1(config Config, logger *log.Logger) error {
-	crypto, err := config.LoadCrypto()
-	if err != nil {
-		return err
-	}
-	raw := make(chan *Elements, config.Burst)
-	signed := make([]chan *Elements, len(config.Endorsers))
-	processed := make(chan *Elements, config.Burst)
-	done := make(chan struct{})
-	errorCh := make(chan error, config.Burst)
-	assember := &Assembler{Signer: crypto, EndorserGroups: config.EndorserGroups, Conf: config}
-	go print_benchmark(config.Logdir, done)
+// func breakdown_phase1(config Config, logger *log.Logger) error {
+// 	crypto, err := config.LoadCrypto()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	raw := make(chan *Element, burst)
+// 	signed := make([]chan *Element, config.EndorserNum)
+// 	processed := make(chan *Element, burst)
+// 	done := make(chan struct{})
+// 	errorCh := make(chan error, burst)
+// 	assembler := &Assembler{Signer: crypto, EndorserGroups: config.EndorserGroupNum, Conf: config}
+// 	go printBenchmark(config.LogPath, done)
 
-	for i := 0; i < len(config.Endorsers); i++ {
-		signed[i] = make(chan *Elements, config.Burst)
-	}
+// 	for i := 0; i < config.EndorserNum; i++ {
+// 		signed[i] = make(chan *Element, burst)
+// 	}
 
-	proposor, err := CreateProposers(config.NumOfConn, config.ClientPerConn, config.Endorsers, config.Burst, logger)
-	if err != nil {
-		return err
-	}
+// 	proposers, err := NewProposers(config.ConnNum, config.ClientPerConnNum, config.Endorsers, burst, logger)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	StartCreateProposal(config, crypto, raw, errorCh, logger)
-	time.Sleep(10 * time.Second)
-	start := time.Now()
+// 	StartCreateProposal(config, crypto, raw, errorCh, logger)
+// 	time.Sleep(10 * time.Second)
+// 	start := time.Now()
 
-	for i := 0; i < config.Threads; i++ {
-		go assember.StartSigner(raw, signed, errorCh, done)
-	}
-	proposor.Start(signed, processed, done, config)
+// 	for i := 0; i < config.SignerNum; i++ {
+// 		go assembler.StartSigner(raw, signed, errorCh, done)
+// 	}
+// 	proposers.Start(signed, processed, done, config)
 
-	// phase1: send proposals to endorsers
-	var cnt int32 = 0
-	var buffer [][]byte
-	var txids []string
-	for i := 0; i < config.NumOfTransactions; i++ {
-		select {
-		case err = <-errorCh:
-			return err
-		case tx := <-processed:
-			res, err := assember.Assemble(tx)
-			if err != nil {
-				fmt.Println("error: assemble endorsement to envelop")
-				return err
-			}
-			bytes, err := json.Marshal(res.Envelope)
-			if err != nil {
-				fmt.Println("error: marshal envelop")
-				return err
-			}
-			cnt += 1
-			buffer = append(buffer, bytes)
-			txids = append(txids, tx.Txid)
-			if cnt+assember.Abort >= int32(config.NumOfTransactions) {
-				break
-			}
-		}
-	}
-	duration := time.Since(start)
+// 	// phase1: send proposals to endorsers
+// 	var cnt int32 = 0
+// 	var buffer [][]byte
+// 	var txids []string
+// 	for i := 0; i < config.TxNum; i++ {
+// 		select {
+// 		case err = <-errorCh:
+// 			return err
+// 		case tx := <-processed:
+// 			res, err := assembler.Assemble(tx)
+// 			if err != nil {
+// 				fmt.Println("error: assemble endorsement to envelop")
+// 				return err
+// 			}
+// 			bytes, err := json.Marshal(res.Envelope)
+// 			if err != nil {
+// 				fmt.Println("error: marshal envelop")
+// 				return err
+// 			}
+// 			cnt += 1
+// 			buffer = append(buffer, bytes)
+// 			txids = append(txids, tx.Txid)
+// 			if cnt+assembler.Abort >= int32(config.TxNum) {
+// 				break
+// 			}
+// 		}
+// 	}
+// 	duration := time.Since(start)
 
-	logger.Infof("Completed endorsing transactions.")
-	buffer_tot <- fmt.Sprintf("tx: %d, duration: %+v, tps: %f", config.NumOfTransactions, duration, float64(config.NumOfTransactions)/duration.Seconds())
-	buffer_tot <- fmt.Sprintf("abort rate because of the different ledger height: %d %.2f%%", assember.Abort, float64(assember.Abort)/float64(config.NumOfTransactions)*100)
-	close(done)
-	g_wg.Wait()
-	// persistency
-	mfile, _ := os.Create(endorsement_file)
-	defer mfile.Close()
-	mw := bufio.NewWriter(mfile)
-	for i := range buffer {
-		mw.Write(buffer[i])
-		mw.WriteByte('\n')
-		mw.WriteString(txids[i])
-		mw.WriteByte('\n')
-	}
-	mw.Flush()
-	return nil
-}
-func breakdown_phase2(config Config, logger *log.Logger) error {
-	crypto, err := config.LoadCrypto()
-	if err != nil {
-		return err
-	}
-	envs := make(chan *Elements, config.Burst)
-	done := make(chan struct{})
-	finishCh := make(chan struct{})
-	errorCh := make(chan error, config.Burst)
-	go print_benchmark(config.Logdir, done)
+// 	logger.Infof("Completed endorsing transactions.")
+// 	printCh <- fmt.Sprintf("tx: %d, duration: %+v, tps: %f", config.TxNum, duration, float64(config.TxNum)/duration.Seconds())
+// 	printCh <- fmt.Sprintf("abort rate because of the different ledger height: %d %.2f%%", assembler.Abort, float64(assembler.Abort)/float64(config.TxNum)*100)
+// 	close(done)
+// 	printWG.Wait()
+// 	// persistency
+// 	mfile, _ := os.Create(endorsementFilename)
+// 	defer mfile.Close()
+// 	mw := bufio.NewWriter(mfile)
+// 	for i := range buffer {
+// 		mw.Write(buffer[i])
+// 		mw.WriteByte('\n')
+// 		mw.WriteString(txids[i])
+// 		mw.WriteByte('\n')
+// 	}
+// 	mw.Flush()
+// 	return nil
+// }
+// func breakdown_phase2(config Config, logger *log.Logger) error {
+// 	crypto, err := config.LoadCrypto()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	envs := make(chan *Element, burst)
+// 	done := make(chan struct{})
+// 	finishCh := make(chan struct{})
+// 	errorCh := make(chan error, burst)
+// 	go printBenchmark(config.LogPath, done)
 
-	broadcaster, err := CreateBroadcasters(config.OrdererClients, config.Orderer, config.Burst, logger)
-	if err != nil {
-		return err
-	}
+// 	broadcaster, err := NewBroadcasters(config.OrdererClients, config.Orderer, burst, logger)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	observer, err := CreateObserver(config.Channel, config.Committer, crypto, logger)
-	if err != nil {
-		return err
-	}
+// 	observer, err := NewObserver(config.Channel, config.Committer, crypto, logger)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	mfile, _ := os.Open(endorsement_file)
-	defer mfile.Close()
-	mscanner := bufio.NewScanner(mfile)
-	var txids []string
-	TXs := make([]common.Envelope, config.NumOfTransactions)
-	i := 0
-	for mscanner.Scan() {
-		bytes := mscanner.Bytes()
-		json.Unmarshal(bytes, &TXs[i])
-		if mscanner.Scan() {
-			txid := mscanner.Text()
-			txids = append(txids, txid)
-		}
-		i++
-	}
-	items := make([]Elements, config.NumOfTransactions)
-	for i := 0; i < len(txids); i++ {
-		var item Elements
-		item.Envelope = &TXs[i]
-		item.Txid = txids[i]
-		global_txid2id[item.Txid] = i
-		items[i] = item
-	}
+// 	mfile, _ := os.Open(endorsementFilename)
+// 	defer mfile.Close()
+// 	mscanner := bufio.NewScanner(mfile)
+// 	var txids []string
+// 	TXs := make([]common.Envelope, config.TxNum)
+// 	i := 0
+// 	for mscanner.Scan() {
+// 		bytes := mscanner.Bytes()
+// 		json.Unmarshal(bytes, &TXs[i])
+// 		if mscanner.Scan() {
+// 			txid := mscanner.Text()
+// 			txids = append(txids, txid)
+// 		}
+// 		i++
+// 	}
+// 	items := make([]Element, config.TxNum)
+// 	for i := 0; i < len(txids); i++ {
+// 		var item Element
+// 		item.Envelope = &TXs[i]
+// 		item.Txid = txids[i]
+// 		txid2id[item.Txid] = i
+// 		items[i] = item
+// 	}
 
-	start := time.Now()
-	go func() {
-		for i := 0; i < len(items); i++ {
-			envs <- &items[i]
-		}
-	}()
-	broadcaster.Start(envs, config.Rate, errorCh, done)
-	var temp0 int32 = 0
-	go observer.Start(int32(len(txids)), errorCh, finishCh, start, &temp0)
-	for {
-		select {
-		case err = <-errorCh:
-			return err
-		case <-finishCh:
-			duration := time.Since(start)
-			logger.Infof("Completed processing transactions.")
-			buffer_tot <- fmt.Sprintf("tx: %d, duration: %+v, tps: %f", config.NumOfTransactions, duration, float64(config.NumOfTransactions)/duration.Seconds())
-			close(done)
-			g_wg.Wait()
-			return nil
-		}
-	}
-}
-
-func Process(config Config, logger *log.Logger) error {
-	global_txid2id = make(map[string]int)
-	if config.End2end {
-		fmt.Println("e2e")
-		return e2e(config, logger)
-	} else {
-		if _, err := os.Stat(endorsement_file); err == nil {
-			fmt.Println("phase2")
-			// phase2: broadcast transactions to order
-			return breakdown_phase2(config, logger)
-		} else {
-			fmt.Println("phase1")
-			// phase1: send proposals to endorsers {
-			return breakdown_phase1(config, logger)
-		}
-
-	}
-}
+// 	start := time.Now()
+// 	go func() {
+// 		for i := 0; i < len(items); i++ {
+// 			envs <- &items[i]
+// 		}
+// 	}()
+// 	broadcaster.Start(envs, config.Rate, errorCh, done)
+// 	var temp0 int32 = 0
+// 	go observer.Start(int32(len(txids)), errorCh, finishCh, start, &temp0)
+// 	for {
+// 		select {
+// 		case err = <-errorCh:
+// 			return err
+// 		case <-finishCh:
+// 			duration := time.Since(start)
+// 			logger.Infof("Completed processing transactions.")
+// 			printCh <- fmt.Sprintf("tx: %d, duration: %+v, tps: %f", config.TxNum, duration, float64(config.TxNum)/duration.Seconds())
+// 			close(done)
+// 			printWG.Wait()
+// 			return nil
+// 		}
+// 	}
+// }
