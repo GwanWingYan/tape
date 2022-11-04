@@ -7,7 +7,6 @@ import (
 
 	"github.com/GwanWingYan/fabric-protos-go/common"
 	"github.com/GwanWingYan/fabric-protos-go/orderer"
-	"github.com/pkg/errors"
 )
 
 type Broadcasters struct {
@@ -15,20 +14,21 @@ type Broadcasters struct {
 	tokenCh      chan struct{}
 }
 
-func NewBroadcasters(inCh <-chan *Element) (*Broadcasters, error) {
+func NewBroadcasters(inCh <-chan *Element) *Broadcasters {
 	bs := &Broadcasters{
 		broadcasters: make([]*Broadcaster, config.BroadcasterNum),
 		tokenCh:      make(chan struct{}, int(config.Burst)),
 	}
 
 	// The expect throughput for each broadcaster
-	expectTPS := config.Rate / float64(config.BroadcasterNum)
+	expectTPS := float64(config.Rate) / float64(config.BroadcasterNum)
 
 	for i := 0; i < config.BroadcasterNum; i++ {
 		client, err := CreateBroadcastClient(config.Orderer)
 		if err != nil {
-			return nil, err
+			logger.Fatalf("Fail to create connection for the No. %d broadcaster: %v", i, err)
 		}
+
 		bs.broadcasters[i] = &Broadcaster{
 			client:           client,
 			broadcasterIndex: i,
@@ -38,11 +38,11 @@ func NewBroadcasters(inCh <-chan *Element) (*Broadcasters, error) {
 		}
 	}
 
-	return bs, nil
+	return bs
 }
 
-// Start starts a goroutine for every broadcaster
-func (bs *Broadcasters) Start() {
+// StartAsync starts a goroutine for every broadcaster
+func (bs *Broadcasters) StartAsync() {
 	// Use a token bucket to throttle the sending of envelopes
 	go func() {
 		if config.Rate == 0 {
@@ -95,13 +95,13 @@ func (b *Broadcaster) Start() {
 			printCh <- fmt.Sprintf("Broadcast: %d %d %s %d", broadcastTime, txid2id[element.Txid], element.Txid, b.broadcasterIndex)
 			err := b.client.Send(element.Envelope)
 			if err != nil {
-				errorCh <- err
+				logger.Fatalln(err)
 			}
 
 			// time2 = time.Now().UnixNano()
 			// count += 1
 
-		case <-done:
+		case <-doneCh:
 			return
 		}
 
@@ -128,8 +128,7 @@ func (b *Broadcaster) StartDraining() {
 		}
 
 		if res.Status != common.Status_SUCCESS {
-			errorCh <- errors.Errorf("recieve erroneous status %s", res.Status)
-			return
+			logger.Fatalf("Receive error status %s", res.Status)
 		}
 	}
 }

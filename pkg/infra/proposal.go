@@ -42,7 +42,7 @@ func CreateProposal(txid string, channel, ccname, version string, args []string)
 	invocation := &peer.ChaincodeInvocationSpec{ChaincodeSpec: spec}
 
 	// use the client's identity provided in the configuration file
-	creator, err := identity.Serialize()
+	creator, err := config.identity.Serialize()
 	if err != nil {
 		return nil, "", err
 	}
@@ -73,7 +73,7 @@ func SignProposal(prop *peer.Proposal) (*peer.SignedProposal, error) {
 		return nil, err
 	}
 
-	sig, err := identity.Sign(propBytes)
+	sig, err := config.identity.Sign(propBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func CreateSignedTx(proposal *peer.Proposal, resps []*peer.ProposalResponse) (*c
 
 	// check that the signer is the same that is referenced in the header
 	// TODO: maybe worth removing?
-	identityBytes, err := identity.Serialize()
+	identityBytes, err := config.identity.Serialize()
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func CreateSignedTx(proposal *peer.Proposal, resps []*peer.ProposalResponse) (*c
 	}
 
 	// sign the payload
-	sig, err := identity.Sign(paylBytes)
+	sig, err := config.identity.Sign(paylBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func CreateSignedDeliverNewestEnv() (*common.Envelope, error) {
 	return protoutil.CreateSignedEnvelope(
 		common.HeaderType_DELIVER_SEEK_INFO,
 		config.Channel,
-		identity,
+		config.identity,
 		seekInfo,
 		0,
 		0,

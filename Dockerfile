@@ -1,19 +1,18 @@
-FROM golang:alpine as golang
+FROM golang:alpine as build
 LABEL stage=builder
 WORKDIR /root
 RUN apk add --no-cache git
-ENV GOPROXY=https://goproxy.cn,direct
-ENV export GOSUMDB=off
-COPY . .
-
-FROM golang as build
-LABEL stage=builder
 ARG GITHUB_USER
 ARG GITHUB_PAT
 RUN go env -w GOPRIVATE=github.com/GwanWingYan &&\
-  git config --global --add url."https://${GITHUB_USER}:${GITHUB_PAT}@github.com/".insteadOf "https://github.com/" &&\
-  # go build -o tape_benchmark ./benchmark &&\
-  go build -o tape ./cmd/tape
+  go env -w GOPROXY=https://goproxy.cn,direct &&\
+  go env -w GOSUMDB=off &&\
+  git config --global --add url."https://${GITHUB_USER}:${GITHUB_PAT}@github.com/".insteadOf "https://github.com/"
+ADD go.mod go.sum /root/
+RUN go mod download -x
+COPY . .
+RUN go build -o tape ./cmd/tape
+
 
 FROM alpine
 RUN mkdir -p /config

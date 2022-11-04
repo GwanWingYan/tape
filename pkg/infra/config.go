@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/GwanWingYan/fabric-protos-go/msp"
@@ -10,8 +11,18 @@ import (
 )
 
 var (
-	noSuchItemError = errors.New("No such item")
+	itemNotProvidedError = errors.New("No such item")
 )
+
+type Node struct {
+	Address       string `yaml:"address"`
+	TLSCACert     string `yaml:"tlsCACert"`
+	TLSCAKey      string `yaml:"tlsCAKey"`
+	TLSCARoot     string `yaml:"tlsCARoot"`
+	TLSCACertByte []byte
+	TLSCAKeyByte  []byte
+	TLSCARootByte []byte
+}
 
 type Config struct {
 	// Network
@@ -26,14 +37,15 @@ type Config struct {
 	Args      []string `yaml:"args"`      // chaincode arguments
 
 	// Client identity
-	MSPID      string `yaml:"mspid"`      // the MSP the client belongs
-	PrivateKey string `yaml:"privateKey"` // client's private key
-	SignCert   string `yaml:"signCert"`   // client's certificate
+	MSPID      string  `yaml:"mspid"`      // the MSP the client belongs
+	PrivateKey string  `yaml:"privateKey"` // client's private key
+	SignCert   string  `yaml:"signCert"`   // client's certificate
+	identity   *Crypto // client's identity
 
 	End2End bool `yaml:"e2e"` // running mode
 
-	Rate  float64 `yaml:"rate"`  // average speed of transaction generation
-	Burst float64 `yaml:"burst"` // maximum speed of transaction generation
+	Rate  int `yaml:"rate"`  // average speed of transaction generation
+	Burst int `yaml:"burst"` // maximum speed of transaction generation
 
 	TxNum  int    `yaml:"txNum"`  // number of transactions
 	TxTime int    `yaml:"txTime"` // maximum execution time
@@ -60,116 +72,127 @@ type Config struct {
 	Seed    int    `yaml:"seed"`    // random seed
 }
 
-type Node struct {
-	Address       string `yaml:"address"`
-	TLSCACert     string `yaml:"tlsCACert"`
-	TLSCAKey      string `yaml:"tlsCAKey"`
-	TLSCARoot     string `yaml:"tlsCARoot"`
-	TLSCACertByte []byte
-	TLSCAKeyByte  []byte
-	TLSCARootByte []byte
+func (c *Config) mustLoadRawConfigFromFile(filename string) {
+	raw, err := ioutil.ReadFile(filename)
+	if err != nil {
+		logger.Panicf("Fail to load %s: %v", filename, err)
+	}
+
+	err = yaml.Unmarshal(raw, c)
+	if err != nil {
+		logger.Panicf("Fail to unmarshal %s: %v", filename, err)
+	}
 }
 
-func LoadConfigFile(config *Config, f string) error {
-
-	raw, err := ioutil.ReadFile(f)
-	if err != nil {
-		return errors.Wrapf(err, "error loading %s", f)
+func (c *Config) mustLoadEndorserConfig() {
+	for i := range c.Endorsers {
+		c.Endorsers[i].mustLoadConfig()
 	}
-	err = yaml.Unmarshal(raw, &config)
-	if err != nil {
-		return errors.Wrapf(err, "error unmarshal %s", f)
-	}
-
-	for i := range config.Endorsers {
-		err = config.Endorsers[i].loadConfig()
-		if err != nil {
-			return err
-		}
-	}
-	config.EndorserNum = len(config.Endorsers)
-
-	err = config.Committer.loadConfig()
-	if err != nil {
-		return err
-	}
-
-	err = config.Orderer.loadConfig()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	c.EndorserNum = len(c.Endorsers)
 }
 
-// LoadCrypto loads the client specified in the configuration file
-func (c Config) LoadCrypto() (*Crypto, error) {
+func (c *Config) mustLoadCommiterConfig() {
+	c.Committer.mustLoadConfig()
+}
+
+func (c *Config) mustLoadOrdererConfig() {
+	c.Orderer.mustLoadConfig()
+}
+
+func (c *Config) mustValid() {
+	if c.Rate < 0 {
+		logger.Panicf("Rate %f is not a zero (unlimited) or positive number\n", c.Rate)
+	}
+
+	if c.Burst < 1 {
+		logger.Panicf("Burst %d is not greater than 1\n", c.Burst)
+	}
+
+	if c.Rate > c.Burst {
+		fmt.Printf("Rate %d is bigger than burst %d, so let rate equal to burst\n", c.Rate, c.Burst)
+		c.Rate = c.Burst
+	}
+}
+
+func LoadConfigFromFile(filename string) (*Config, error) {
+	c := &Config{}
+
+	c.mustLoadRawConfigFromFile(filename)
+	c.mustLoadEndorserConfig()
+	c.mustLoadCommiterConfig()
+	c.mustLoadOrdererConfig()
+	c.mustLoadClientIdentity()
+
+	c.mustValid()
+
+	return c, nil
+}
+
+// mustLoadClientIdentity loads the client specified in the configuration file
+func (c *Config) mustLoadClientIdentity() {
 	cc := CryptoConfig{
 		MSPID:    c.MSPID,
 		PrivKey:  c.PrivateKey,
 		SignCert: c.SignCert,
 	}
 
-	priv, err := GetPrivateKey(cc.PrivKey)
+	privateKey, err := GetPrivateKey(cc.PrivKey)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading priv key")
+		logger.Fatalf("Fail to load private key: %v", err)
 	}
 
 	cert, certBytes, err := GetCertificate(cc.SignCert)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading certificate")
+		logger.Fatalf("Fail to load certificate: %v", err)
 	}
 
 	id := &msp.SerializedIdentity{
 		Mspid:   cc.MSPID,
 		IdBytes: certBytes,
 	}
-
 	name, err := proto.Marshal(id)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting msp id")
+		logger.Fatalf("Fail to get msp id: %v", err)
 	}
 
-	return &Crypto{
+	c.identity = &Crypto{
 		Creator:  name,
-		PrivKey:  priv,
+		PrivKey:  privateKey,
 		SignCert: cert,
-	}, nil
+	}
 }
 
 func GetTLSCACerts(file string) ([]byte, error) {
-	if len(file) == 0 {
-		return nil, noSuchItemError
+	if file == "" {
+		return nil, itemNotProvidedError
 	}
 
 	in, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading %s", file)
+		return nil, errors.Wrapf(err, "fail to load %s", file)
 	}
 
 	return in, nil
 }
 
 //TODO
-func (n *Node) loadConfig() error {
+func (n *Node) mustLoadConfig() {
 	certByte, err := GetTLSCACerts(n.TLSCACert)
-	if err != nil && err != noSuchItemError {
-		return errors.Wrapf(err, "fail to load TLS CA Cert %s", n.TLSCACert)
+	if err != nil && err != itemNotProvidedError {
+		logger.Fatalf("Fail to load TLS CA Cert %s: %v", n.TLSCACert, err)
 	}
 
 	keyByte, err := GetTLSCACerts(n.TLSCAKey)
-	if err != nil && err != noSuchItemError {
-		return errors.Wrapf(err, "fail to load TLS CA Key %s", n.TLSCAKey)
+	if err != nil && err != itemNotProvidedError {
+		logger.Fatalf("Fail to load TLS CA Key %s: %v", n.TLSCAKey, err)
 	}
 
 	rootByte, err := GetTLSCACerts(n.TLSCARoot)
-	if err != nil && err != noSuchItemError {
-		return errors.Wrapf(err, "fail to load TLS CA Root %s", n.TLSCARoot)
+	if err != nil && err != itemNotProvidedError {
+		logger.Fatalf("Fail to load TLS CA Root %s: %v", n.TLSCARoot, err)
 	}
 
 	n.TLSCACertByte = certByte
 	n.TLSCAKeyByte = keyByte
 	n.TLSCARootByte = rootByte
-
-	return nil
 }

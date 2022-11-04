@@ -8,7 +8,7 @@ type Signers struct {
 	Signers []*Signer
 }
 
-func NewSigners(inCh chan *Element, outCh []chan *Element) (*Signers, error) {
+func NewSigners(inCh chan *Element, outCh []chan *Element) *Signers {
 	signerArray := make([]*Signer, config.SignerNum)
 	for i := 0; i < config.SignerNum; i++ {
 		signerArray[i] = &Signer{
@@ -17,10 +17,10 @@ func NewSigners(inCh chan *Element, outCh []chan *Element) (*Signers, error) {
 		}
 	}
 
-	return &Signers{Signers: signerArray}, nil
+	return &Signers{Signers: signerArray}
 }
 
-func (ss *Signers) Start() {
+func (ss *Signers) StartAsync() {
 	for _, signer := range ss.Signers {
 		go signer.Start()
 	}
@@ -55,8 +55,7 @@ func (s *Signer) Start() {
 			// sign the raw transaction
 			t, err := s.SignElement(r)
 			if err != nil {
-				errorCh <- err
-				return
+				logger.Fatalf("Fail to sign transaction %s: %v", t.Txid, err)
 			}
 
 			// Randomly select a group of endorsers to endorse the transaction
@@ -68,7 +67,7 @@ func (s *Signer) Start() {
 				s.outCh[i] <- t
 			}
 
-		case <-done:
+		case <-doneCh:
 			return
 		}
 	}

@@ -11,84 +11,57 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const (
-	logLevelEnv = "TAPE_LOGLEVEL"
-)
-
 var (
-	logger  *log.Logger
-	config  *infra.Config
 	fullCmd string
 )
 
 var (
-	app = kingpin.New("tape", "A performance test tool for Hyperledger Fabric")
-
-	run     = app.Command("run", "Start the tape program").Default()
-	version = app.Command("version", "Show version information")
-
-	configFile = run.Flag("config", "Path to config file").Required().Short('c').String()
+	app        = kingpin.New("tape", "A performance measurement tool for Hyperledger Fabric")
+	run        = app.Command("run", "Run this program").Default()
+	version    = app.Command("version", "Show version information")
+	configFile = run.Flag("config", "Path of config file").Required().Short('c').String()
 )
 
-func newLogger() *log.Logger {
-	logger = log.New()
+func setLogLevel(logger *log.Logger) {
 	logger.SetLevel(log.InfoLevel)
-	if value, ok := os.LookupEnv(logLevelEnv); ok {
+	if value, ok := os.LookupEnv("TAPE_LOGLEVEL"); ok {
 		if level, err := log.ParseLevel(value); err == nil {
 			logger.SetLevel(level)
 		}
 	}
+}
+
+func getLogger() *log.Logger {
+	logger := log.New()
+	setLogLevel(logger)
 	return logger
 }
 
-func loadConfig() *infra.Config {
-	config = &infra.Config{}
-	err := infra.LoadConfigFile(config, *configFile)
+func getConfig() *infra.Config {
+	config, err := infra.LoadConfigFromFile(*configFile)
 	if err != nil {
-		log.Fatalf("load config error: %v\n", err)
+		log.Panicf("Fail to load config: %v\n", err)
 	}
 	return config
 }
 
-func checkArgs() {
-	if config.Rate < 0 {
-		logger.Errorf("tape: error: rate %f is not a zero (unlimited) or positive number\n", config.Rate)
-		os.Exit(1)
-	}
-
-	if config.Burst < 1 {
-		logger.Errorf("tape: error: burst %d is not greater than 1\n", config.Burst)
-		os.Exit(1)
-	}
-
-	if config.Rate > config.Burst {
-		fmt.Printf("rate %f is bigger than burst %f, so set rate to burst\n", config.Rate, config.Burst)
-		config.Rate = config.Burst
-	}
-}
-
 func main() {
 	var err error
+	logger := getLogger()
 
 	fullCmd = kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	logger = newLogger()
-
-	config = loadConfig()
-
 	switch fullCmd {
 	case run.FullCommand():
-		checkArgs()
-		err = infra.Process(config, logger)
+		config := getConfig()
+		infra.Process(config, logger)
 	case version.FullCommand():
 		fmt.Printf(infra.GetVersionInfo())
 	default:
-		err = errors.Errorf("invalid command: %s", fullCmd)
+		err = errors.Errorf("Invalid command: %s", fullCmd)
 	}
 
 	if err != nil {
-		logger.Errorln(err)
-		os.Exit(1)
+		logger.Panicln(err)
 	}
 	os.Exit(0)
 }

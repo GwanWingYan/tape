@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
-	"github.com/pkg/errors"
 )
 
 type Initiator struct {
@@ -13,7 +12,7 @@ type Initiator struct {
 	outCh     chan *Element
 }
 
-func NewInitiator(outCh chan *Element) (*Initiator, error) {
+func NewInitiator(outCh chan *Element) *Initiator {
 	it := &Initiator{
 		proposals: make([]*peer.Proposal, config.TxNum),
 		txids:     make([]string, config.TxNum),
@@ -43,8 +42,7 @@ func NewInitiator(outCh chan *Element) (*Initiator, error) {
 			chaincodeCtorJSON,
 		)
 		if err != nil {
-			errorCh <- errors.Wrapf(err, "Error creating proposal %s", txid)
-			return nil, err
+			logger.Fatalf("Fail to create proposal %s: %v", txid, err)
 		}
 
 		txid2id[txid] = i
@@ -52,15 +50,13 @@ func NewInitiator(outCh chan *Element) (*Initiator, error) {
 		it.txids[i] = txid
 	}
 
-	return it, nil
+	return it
 }
 
-func (it *Initiator) Start() {
-	go func() {
-		// send all unsigned transactions (raw transactions) to the channel 'raw'
-		// waiting for subsequent processing
-		for i := 0; i < len(it.proposals); i++ {
-			it.outCh <- &Element{Proposal: it.proposals[i], Txid: it.txids[i]}
-		}
-	}()
+func (it *Initiator) StartSync() {
+	// Send all unsigned transactions (raw transactions) to the channel 'raw'
+	// waiting for subsequent processing
+	for i := 0; i < len(it.proposals); i++ {
+		it.outCh <- &Element{Proposal: it.proposals[i], Txid: it.txids[i]}
+	}
 }

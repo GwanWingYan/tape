@@ -13,7 +13,7 @@ type Proposers struct {
 	tokenCh   chan struct{}
 }
 
-func NewProposers(inCh []chan *Element, outCh chan *Element) (*Proposers, error) {
+func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 	// connNum connections for one peer
 	// one Proposer for one connection
 
@@ -22,15 +22,16 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) (*Proposers, error)
 	tokenCh := make(chan struct{}, int(config.Burst))
 
 	// The expect throughput for each client
-	expectTPS := config.Rate / float64(config.ConnNum*config.ClientPerConnNum*config.EndorserGroupNum)
+	expectTPS := float64(config.Rate) / float64(config.ConnNum*config.ClientPerConnNum*config.EndorserGroupNum)
 
 	for i, endorser := range config.Endorsers {
 		proposersForNode := make([]*Proposer, config.ConnNum)
 		for j := 0; j < config.ConnNum; j++ {
 			client, err := CreateEndorserClient(endorser)
 			if err != nil {
-				return nil, err
+				logger.Fatalf("Fail to create No. %d connection for endorser %s: %v", j, endorser.Address, err)
 			}
+
 			proposersForNode[j] = &Proposer{
 				endorserIndex: i,
 				connIndex:     j,
@@ -48,11 +49,11 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) (*Proposers, error)
 	return &Proposers{
 		proposers: proposers,
 		tokenCh:   tokenCh,
-	}, nil
+	}
 }
 
-// Start starts a goroutine as proposer per client per connection per endorser
-func (ps *Proposers) Start() {
+// StartAsync starts a goroutine as proposer per client per connection per endorser
+func (ps *Proposers) StartAsync() {
 	logger.Infof("Start sending transactions")
 
 	// Use a token bucket to throttle the sending of proposals
@@ -141,7 +142,7 @@ func (p *Proposer) startClient(clientIndex int) {
 			// time2 = time.Now().UnixNano()
 			// count += 1
 
-		case <-done:
+		case <-doneCh:
 			return
 		}
 

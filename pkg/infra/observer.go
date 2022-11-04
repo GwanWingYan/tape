@@ -5,40 +5,39 @@ import (
 	"time"
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
-	"github.com/pkg/errors"
 )
 
 type Observer struct {
 	client peer.Deliver_DeliverFilteredClient
 }
 
-func NewObserver() (*Observer, error) {
+func NewObserver() *Observer {
 	deliverer, err := CreateDeliverFilteredClient()
 	if err != nil {
-		return nil, err
+		logger.Fatalf("Fail to create DeliverFilteredClient: %v", err)
 	}
 
 	seek, err := CreateSignedDeliverNewestEnv()
 	if err != nil {
-		return nil, err
+		logger.Fatalf("Fail to create SignedEnvelope: %v", err)
 	}
 
 	if err = deliverer.Send(seek); err != nil {
-		return nil, err
+		logger.Fatalf("Fail to send SignedEnvelope: %v", err)
 	}
 
 	// drain first response
 	if _, err = deliverer.Recv(); err != nil {
-		return nil, err
+		logger.Fatalf("Fail to receive the first response: %v", err)
 	}
 
 	return &Observer{
 		client: deliverer,
-	}, nil
+	}
 }
 
-// Start starts observing
-func (o *Observer) Start() {
+// StartAsync starts observing
+func (o *Observer) StartAsync() {
 	logger.Infof("Start observer\n")
 
 	deliverCh := make(chan *peer.DeliverResponse_FilteredBlock)
@@ -56,11 +55,11 @@ func (o *Observer) Start() {
 					printCh <- fmt.Sprintf("End: %d %d %s %s", endTime, txid2id[txid], txid, tx.TxValidationCode)
 				}
 				if validTxNum+Metric.Abort >= int32(config.TxNum) {
-					close(finishCh)
+					close(observerEndCh)
 					return
 				}
 			case <-time.After(20 * time.Second):
-				close(finishCh)
+				close(observerEndCh)
 				return
 			}
 		}
@@ -71,11 +70,12 @@ func (o *Observer) Start() {
 		for {
 			r, err := o.client.Recv()
 			if err != nil {
-				errorCh <- err
+				//TODO
+				logger.Fatalln(err)
 			}
 			if r == nil {
-				errorCh <- errors.Errorf("received nil message, but expect a valid block instead. You could look into your peer logs for more info")
-				return
+				//TODO
+				logger.Fatalln("received nil message, but expect a valid block instead. You could look into your peer logs for more info")
 			}
 
 			switch t := r.Type.(type) {

@@ -4,7 +4,7 @@ type Integrators struct {
 	integrators []*Integrator
 }
 
-func NewIntegrators(inCh chan *Element, outCh chan *Element) (*Integrators, error) {
+func NewIntegrators(inCh chan *Element, outCh chan *Element) *Integrators {
 	itegratorArray := make([]*Integrator, config.IntegratorNum)
 	for i := 0; i < config.IntegratorNum; i++ {
 		itegratorArray[i] = &Integrator{
@@ -13,10 +13,10 @@ func NewIntegrators(inCh chan *Element, outCh chan *Element) (*Integrators, erro
 		}
 	}
 
-	return &Integrators{integrators: itegratorArray}, nil
+	return &Integrators{integrators: itegratorArray}
 }
 
-func (its *Integrators) Start() {
+func (its *Integrators) StartAsync() {
 	// Start multiple goroutines to extract responses and integrate it into envelope
 	for _, it := range its.integrators {
 		go it.Start()
@@ -51,7 +51,7 @@ func (it *Integrator) Start() {
 				continue
 			}
 			it.outCh <- envelope
-		case <-done:
+		case <-doneCh:
 			return
 		}
 	}

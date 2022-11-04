@@ -72,7 +72,7 @@ var _ = Describe("Config", func() {
 
 			generateConfigFile(f.Name(), struct{ TlsFile string }{tlsFile.Name()})
 
-			c, err := infra.LoadConfigFile(f.Name())
+			c, err := infra.LoadConfigFromFile(f.Name())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(c).To(Equal(infra.Config{
 				Endorsers: []infra.Node{
@@ -98,7 +98,7 @@ var _ = Describe("Config", func() {
 
 	Context("bad", func() {
 		It("fails to load missing config file", func() {
-			_, err := infra.LoadConfigFile("invalid_file")
+			_, err := infra.LoadConfigFromFile("invalid_file")
 			Expect(err).Should(MatchError(ContainSubstring("invalid_file")))
 		})
 
@@ -109,7 +109,7 @@ var _ = Describe("Config", func() {
 
 			generateConfigFile(f.Name(), struct{ TlsFile string }{"invalid_file"})
 
-			_, err := infra.LoadConfigFile(f.Name())
+			_, err := infra.LoadConfigFromFile(f.Name())
 			Expect(err).Should(MatchError(ContainSubstring("invalid_file")))
 		})
 	})
