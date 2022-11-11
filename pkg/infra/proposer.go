@@ -114,7 +114,7 @@ func (p *Proposer) startClient(clientIndex int) {
 			printCh <- fmt.Sprintf("Start: %d %d %s %d %d %d", sendTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 
 			// send proposal
-			resp, err := p.client.ProcessProposal(context.Background(), element.SignedProp)
+			resp, err := p.client.ProcessProposal(context.Background(), element.SignedProposal)
 			if err != nil || resp.Response.Status < 200 || resp.Response.Status >= 400 {
 				if resp == nil {
 					logger.Errorf("Error processing proposal: %v, status: unknown, address: %s \n", err, p.address)

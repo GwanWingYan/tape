@@ -68,17 +68,21 @@ func CreateProposal(txid string, channel, ccname, version string, args []string)
 
 // SignProposal signs an unsigned proposal and attach the signature to the signed proposal
 func SignProposal(prop *peer.Proposal) (*peer.SignedProposal, error) {
-	propBytes, err := proto.Marshal(prop)
+	proposalBytes, err := proto.Marshal(prop)
 	if err != nil {
 		return nil, err
 	}
 
-	sig, err := config.identity.Sign(propBytes)
+	signature, err := config.identity.Sign(proposalBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return &peer.SignedProposal{ProposalBytes: propBytes, Signature: sig}, nil
+	signedProposal := &peer.SignedProposal{
+		ProposalBytes: proposalBytes,
+		Signature:     signature,
+	}
+	return signedProposal, nil
 }
 
 // CreateSignedTx extract response and signs and generates an envelope
