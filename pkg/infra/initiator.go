@@ -29,8 +29,6 @@ func NewInitiator(outCh chan *Element) *Initiator {
 
 		tempTxID := ""
 		if !config.CheckTxID {
-			// A customized transaction id
-			//TODO: is this scheme accpetable?
 			tempTxID = strconv.Itoa(i) + "_+=+_" + session + "_+=+_" + getName(20)
 		}
 

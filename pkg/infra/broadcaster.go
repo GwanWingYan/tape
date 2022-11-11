@@ -82,10 +82,6 @@ func (b *Broadcaster) getToken() {
 func (b *Broadcaster) Start() {
 	logger.Infof("Start broadcasting\n")
 
-	// count := 0
-	// time1 := time.Now().UnixNano()
-	// var time2 int64
-
 	for {
 		select {
 		case element := <-b.inCh:
@@ -98,21 +94,9 @@ func (b *Broadcaster) Start() {
 				logger.Fatalln(err)
 			}
 
-			// time2 = time.Now().UnixNano()
-			// count += 1
-
 		case <-doneCh:
 			return
 		}
-
-		// //TODO: preserve and drop?
-		// if count >= 20 {
-		// 	realTPS := count * 1e9 / int(time2-time1)
-		// 	logger.Infof("Broadcaster(%d) realTPS: %f expectTPS: %f", realTPS, b.expectTPS)
-		// 	// reset
-		// 	count = 0
-		// 	time1 = time.Now().UnixNano()
-		// }
 	}
 }
 

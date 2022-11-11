@@ -103,14 +103,10 @@ func (p *Proposer) Start() {
 }
 
 func (p *Proposer) startClient(clientIndex int) {
-	// count := 0
-	// time1 := time.Now().UnixNano()
-	// var time2 int64
-
 	for {
 		select {
 		case element := <-p.inCh:
-			// Send sign proposal to peer for endorsement
+			// Send signed proposal to peer for endorsement
 
 			p.getToken()
 
@@ -128,7 +124,6 @@ func (p *Proposer) startClient(clientIndex int) {
 				continue
 			}
 
-			// collect for endorsement
 			element.lock.Lock()
 			element.Responses = append(element.Responses, resp)
 			if len(element.Responses) >= config.EndorserNum {
@@ -139,20 +134,8 @@ func (p *Proposer) startClient(clientIndex int) {
 			}
 			element.lock.Unlock()
 
-			// time2 = time.Now().UnixNano()
-			// count += 1
-
 		case <-doneCh:
 			return
 		}
-
-		// //TODO: preserve and drop?
-		// if count >= 10 {
-		// 	realTPS := float64(count*1e9) / float64(time2-time1)
-		// 	p.logger.Infof("Proposer(%d,%d,%d) realTPS: %f expectTPS: %f", p.endorserIndex, p.connIndex, clientIndex, realTPS, p.expectTPS)
-		// 	// Reset
-		// 	time1 = time.Now().UnixNano()
-		// 	count = 0
-		// }
 	}
 }
