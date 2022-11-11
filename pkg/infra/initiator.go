@@ -19,40 +19,43 @@ func NewInitiator(outCh chan *Element) *Initiator {
 		outCh:     outCh,
 	}
 
-	chaincodeCtorJSONs := generateCCArgsList()
-	session := getName(20)
-
 	// Create proposal and id for all generated transactions
+	ccArgsList := generateCCArgsList()
+	session := getName(20)
 	for i := 0; i < config.TxNum; i++ {
-		chaincodeCtorJSON := chaincodeCtorJSONs[i]
+		ccArgs := ccArgsList[i]
 
-		tempTxID := ""
+		tempTXID := ""
 		if !config.CheckTxID {
-			tempTxID = strconv.Itoa(i) + "_+=+_" + session + "_+=+_" + getName(20)
+			tempTXID = generateCustomTXID(i, session)
 		}
 
-		prop, txid, err := CreateProposal(
-			tempTxID,
+		proposal, txID, err := CreateProposal(
+			tempTXID,
 			config.Channel,
 			config.Chaincode,
 			config.Version,
-			chaincodeCtorJSON,
+			ccArgs,
 		)
 		if err != nil {
-			logger.Fatalf("Fail to create proposal %s: %v", txid, err)
+			logger.Fatalf("Fail to create proposal %s: %v", txID, err)
 		}
 
-		txid2id[txid] = i
-		it.proposals[i] = prop
-		it.txids[i] = txid
+		txid2id[txID] = i
+		it.proposals[i] = proposal
+		it.txids[i] = txID
 	}
 
 	return it
 }
 
+func generateCustomTXID(i int, session string) string {
+	return strconv.Itoa(i) + "_+=+_" + session + "_+=+_" + getName(20)
+}
+
+// StartSync sends all unsigned transactions (raw transactions) to the channel 'raw'
+// waiting for subsequent processing
 func (it *Initiator) StartSync() {
-	// Send all unsigned transactions (raw transactions) to the channel 'raw'
-	// waiting for subsequent processing
 	for i := 0; i < len(it.proposals); i++ {
 		it.outCh <- &Element{Proposal: it.proposals[i], Txid: it.txids[i]}
 	}
