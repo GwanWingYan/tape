@@ -19,8 +19,7 @@ func NewInitiator(outCh chan *Element) *Initiator {
 		outCh:     outCh,
 	}
 
-	wg := NewWorkloadGenerator()
-	chaincodeCtorJSONs := wg.GenerateWorkload()
+	chaincodeCtorJSONs := generateCCArgsList()
 	session := getName(20)
 
 	// Create proposal and id for all generated transactions
