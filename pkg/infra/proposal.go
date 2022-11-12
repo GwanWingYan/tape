@@ -42,7 +42,7 @@ func CreateProposal(txid string, channel, ccname, version string, args []string)
 	invocation := &peer.ChaincodeInvocationSpec{ChaincodeSpec: spec}
 
 	// use the client's identity provided in the configuration file
-	creator, err := config.identity.Serialize()
+	creator, err := config.Identity.Serialize()
 	if err != nil {
 		return nil, "", err
 	}
@@ -73,7 +73,7 @@ func SignProposal(prop *peer.Proposal) (*peer.SignedProposal, error) {
 		return nil, err
 	}
 
-	signature, err := config.identity.Sign(proposalBytes)
+	signature, err := config.Identity.Sign(proposalBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func CreateSignedDeliverNewestEnv() (*common.Envelope, error) {
 	return protoutil.CreateSignedEnvelope(
 		common.HeaderType_DELIVER_SEEK_INFO,
 		config.Channel,
-		config.identity,
+		config.Identity,
 		seekInfo,
 		0,
 		0,
@@ -167,7 +167,7 @@ func getHeader(headerBytes []byte) (*common.Header, error) {
 // checkHeaderSignerValidity check that the signer is the same
 // that is referenced in the header.
 func checkHeaderSignerValidity(header *common.Header) error {
-	identityBytes, err := config.identity.Serialize()
+	identityBytes, err := config.Identity.Serialize()
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func generateEnvelope(payload *common.Payload) (*common.Envelope, error) {
 		return nil, err
 	}
 
-	signature, err := config.identity.Sign(payloadBytes)
+	signature, err := config.Identity.Sign(payloadBytes)
 	if err != nil {
 		return nil, err
 	}

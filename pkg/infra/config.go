@@ -40,7 +40,7 @@ type Config struct {
 	MSPID      string  `yaml:"mspid"`      // the MSP the client belongs
 	PrivateKey string  `yaml:"privateKey"` // client's private key
 	SignCert   string  `yaml:"signCert"`   // client's certificate
-	identity   *Crypto // client's identity
+	Identity   *Crypto // client's identity
 
 	End2End bool `yaml:"e2e"` // running mode
 
@@ -155,7 +155,7 @@ func (c *Config) mustLoadClientIdentity() {
 		logger.Fatalf("Fail to get msp id: %v", err)
 	}
 
-	c.identity = &Crypto{
+	c.Identity = &Crypto{
 		Creator:  name,
 		PrivKey:  privateKey,
 		SignCert: cert,

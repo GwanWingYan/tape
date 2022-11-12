@@ -89,13 +89,12 @@ func (b *Broadcaster) send() {
 			b.getToken()
 
 			broadcastTime := time.Now().UnixNano()
-			printCh <- fmt.Sprintf("Broadcast: %d %d %s %d", broadcastTime, txid2id[element.Txid], element.Txid, b.broadcasterIndex)
+			printCh <- fmt.Sprintf("%-10s %d %4d %s %d", "Broadcast", broadcastTime, txid2id[element.Txid], element.Txid, b.broadcasterIndex)
 
 			err := b.client.Send(element.Envelope)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-
 		case <-doneCh:
 			return
 		}

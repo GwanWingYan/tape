@@ -105,8 +105,8 @@ func (p *Proposer) startClient(clientIndex int) {
 
 			p.getToken()
 
-			sendTime := time.Now().UnixNano()
-			printCh <- fmt.Sprintf("Start: %d %d %s %d %d %d", sendTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
+			proposedTime := time.Now().UnixNano()
+			printCh <- fmt.Sprintf("%-10s %d %4d %s %d %d %d", "Proposed", proposedTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 
 			// send proposal
 			resp, err := p.client.ProcessProposal(context.Background(), element.SignedProposal)
@@ -124,8 +124,8 @@ func (p *Proposer) startClient(clientIndex int) {
 			if len(element.Responses) >= config.EndorserNum {
 				// Collect enough endorsement for this transaction
 				p.outCh <- element
-				proposalTime := time.Now().UnixNano()
-				printCh <- fmt.Sprintf("Proposal: %d %d %s %d %d %d", proposalTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
+				endorsedTime := time.Now().UnixNano()
+				printCh <- fmt.Sprintf("%-10s %d %4d %s %d %d %d", "Endorsed", endorsedTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 			}
 			element.lock.Unlock()
 
