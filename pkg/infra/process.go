@@ -186,7 +186,6 @@ func End2End() {
 	signers := NewSigners(unsignedCh, signedChs)
 	proposers := NewProposers(signedChs, endorsedCh)
 	integrators := NewIntegrators(endorsedCh, integratedCh)
-	// 从这里开始
 	broadcasters := NewBroadcasters(integratedCh)
 	observer := NewObserver()
 

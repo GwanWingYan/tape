@@ -44,25 +44,26 @@ func NewBroadcasters(inCh <-chan *Element) *Broadcasters {
 // StartAsync starts a goroutine for every broadcaster
 func (bs *Broadcasters) StartAsync() {
 	// Use a token bucket to throttle the sending of envelopes
-	go func() {
-		if config.Rate == 0 {
-			for {
-				bs.tokenCh <- struct{}{}
-			}
-		} else {
-			interval := 1e9 / config.Rate
-			for {
-				bs.tokenCh <- struct{}{}
-				time.Sleep(time.Duration(interval) * time.Nanosecond)
-			}
-		}
-	}()
+	go bs.generateTokens()
 
 	// Start multiple goroutines to send envelopes
 	for _, b := range bs.broadcasters {
-		//TODO?
-		go b.StartDraining()
-		go b.Start()
+		go b.receive()
+		go b.send()
+	}
+}
+
+func (bs *Broadcasters) generateTokens() {
+	if config.Rate == 0 {
+		for {
+			bs.tokenCh <- struct{}{}
+		}
+	} else {
+		interval := 1e9 / config.Rate
+		for {
+			bs.tokenCh <- struct{}{}
+			time.Sleep(time.Duration(interval) * time.Nanosecond)
+		}
 	}
 }
 
@@ -78,17 +79,18 @@ func (b *Broadcaster) getToken() {
 	<-b.tokenCh
 }
 
-// Start collects and send envelopes to the orderer
-func (b *Broadcaster) Start() {
+// send collects and send envelopes to the orderer
+func (b *Broadcaster) send() {
 	logger.Infof("Start broadcasting\n")
 
 	for {
 		select {
 		case element := <-b.inCh:
-			// todo
 			b.getToken()
+
 			broadcastTime := time.Now().UnixNano()
 			printCh <- fmt.Sprintf("Broadcast: %d %d %s %d", broadcastTime, txid2id[element.Txid], element.Txid, b.broadcasterIndex)
+
 			err := b.client.Send(element.Envelope)
 			if err != nil {
 				logger.Fatalln(err)
@@ -100,14 +102,13 @@ func (b *Broadcaster) Start() {
 	}
 }
 
-func (b *Broadcaster) StartDraining() {
+func (b *Broadcaster) receive() {
 	for {
 		res, err := b.client.Recv()
 		if err != nil {
-			if err == io.EOF {
-				return
+			if err != io.EOF {
+				logger.Errorf("Recieve broadcast error: %+v, status: %+v\n", err, res)
 			}
-			logger.Errorf("recieve broadcast error: %+v, status: %+v\n", err, res)
 			return
 		}
 
