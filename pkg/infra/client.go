@@ -16,38 +16,50 @@ const (
 	MAX_TRY = 3
 )
 
-func CreateGRPCClient(node Node) (*comm.GRPCClient, error) {
-	var certs [][]byte
-	if node.TLSCACertByte != nil {
-		certs = append(certs, node.TLSCACertByte)
-	}
-	config := comm.ClientConfig{}
-	config.Timeout = 5 * time.Second
-	config.SecOpts = comm.SecureOptions{
-		UseTLS:            false,
-		RequireClientCert: false,
-		ServerRootCAs:     certs,
-	}
+func newGRPCClient(node Node) (*comm.GRPCClient, error) {
+	clientConfig := generateClientConfig(node)
 
-	if len(certs) > 0 {
-		config.SecOpts.UseTLS = true
-		if len(node.TLSCAKey) > 0 && len(node.TLSCARoot) > 0 {
-			config.SecOpts.RequireClientCert = true
-			config.SecOpts.Certificate = node.TLSCACertByte
-			config.SecOpts.Key = node.TLSCAKeyByte
-			if node.TLSCARootByte != nil {
-				config.SecOpts.ClientRootCAs = append(config.SecOpts.ClientRootCAs, node.TLSCARootByte)
-			}
-		}
-	}
-
-	grpcClient, err := comm.NewGRPCClient(config)
-	//to do: unit test for this error, current fails to make case for this
+	grpcClient, err := comm.NewGRPCClient(clientConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error connecting to %s", node.Address)
 	}
 
 	return grpcClient, nil
+}
+
+func generateClientConfig(node Node) comm.ClientConfig {
+	certs := collectTLSCACertsBytes(node)
+
+	clientConfig := comm.ClientConfig{
+		Timeout: 5 * time.Second,
+		SecOpts: comm.SecureOptions{
+			UseTLS:            false,
+			RequireClientCert: false,
+			ServerRootCAs:     certs,
+		},
+	}
+
+	if len(certs) > 0 {
+		clientConfig.SecOpts.UseTLS = true
+		if len(node.TLSCAKey) > 0 && len(node.TLSCARoot) > 0 {
+			clientConfig.SecOpts.RequireClientCert = true
+			clientConfig.SecOpts.Certificate = node.TLSCACertByte
+			clientConfig.SecOpts.Key = node.TLSCAKeyByte
+			if node.TLSCARootByte != nil {
+				clientConfig.SecOpts.ClientRootCAs = append(clientConfig.SecOpts.ClientRootCAs, node.TLSCARootByte)
+			}
+		}
+	}
+
+	return clientConfig
+}
+
+func collectTLSCACertsBytes(node Node) [][]byte {
+	var certs [][]byte
+	if node.TLSCACertByte != nil {
+		certs = append(certs, node.TLSCACertByte)
+	}
+	return certs
 }
 
 func CreateEndorserClient(node Node) (peer.EndorserClient, error) {
@@ -75,17 +87,21 @@ func CreateDeliverFilteredClient() (peer.Deliver_DeliverFilteredClient, error) {
 }
 
 func DialConnection(node Node) (*grpc.ClientConn, error) {
-	gRPCClient, err := CreateGRPCClient(node)
+	gRPCClient, err := newGRPCClient(node)
 	if err != nil {
 		return nil, err
 	}
-	var connError error
-	var conn *grpc.ClientConn
+
 	for i := 1; i <= MAX_TRY; i++ {
-		conn, connError = gRPCClient.NewConnection(node.Address, func(tlsConfig *tls.Config) { tlsConfig.InsecureSkipVerify = true })
-		if connError == nil {
+		conn, err := gRPCClient.NewConnection(
+			node.Address,
+			func(tlsConfig *tls.Config) {
+				tlsConfig.InsecureSkipVerify = true
+			},
+		)
+		if err == nil {
 			return conn, nil
 		}
 	}
-	return nil, errors.Wrapf(connError, "failed to dial %s: %s", node.Address)
+	return nil, errors.Wrapf(err, "failed to dial %s: %s", node.Address)
 }
