@@ -5,15 +5,15 @@ type Integrators struct {
 }
 
 func NewIntegrators(inCh chan *Element, outCh chan *Element) *Integrators {
-	itegratorArray := make([]*Integrator, config.IntegratorNum)
+	itegratorList := make([]*Integrator, config.IntegratorNum)
 	for i := 0; i < config.IntegratorNum; i++ {
-		itegratorArray[i] = &Integrator{
+		itegratorList[i] = &Integrator{
 			inCh:  inCh,
 			outCh: outCh,
 		}
 	}
 
-	return &Integrators{integrators: itegratorArray}
+	return &Integrators{integrators: itegratorList}
 }
 
 func (its *Integrators) StartAsync() {
@@ -26,16 +26,6 @@ func (its *Integrators) StartAsync() {
 type Integrator struct {
 	inCh  chan *Element
 	outCh chan *Element
-}
-
-// integrate extracts responses and generates an envelope
-func (it *Integrator) Integrate(e *Element) (*Element, error) {
-	env, err := CreateSignedTx(e.Proposal, e.Responses)
-	if err != nil {
-		return nil, err
-	}
-	e.Envelope = env
-	return e, nil
 }
 
 // StartIntegrator tries to extract enough response from endorsed transaction and integrate them into an envelope
@@ -55,4 +45,14 @@ func (it *Integrator) Start() {
 			return
 		}
 	}
+}
+
+// integrate extracts responses and generates an envelope
+func (it *Integrator) Integrate(e *Element) (*Element, error) {
+	envelope, err := CreateSignedTx(e.Proposal, e.Responses)
+	if err != nil {
+		return nil, err
+	}
+	e.Envelope = envelope
+	return e, nil
 }

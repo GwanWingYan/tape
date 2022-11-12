@@ -85,134 +85,37 @@ func SignProposal(prop *peer.Proposal) (*peer.SignedProposal, error) {
 	return signedProposal, nil
 }
 
-// CreateSignedTx extract response and signs and generates an envelope
-func CreateSignedTx(proposal *peer.Proposal, resps []*peer.ProposalResponse) (*common.Envelope, error) {
-	if len(resps) == 0 {
-		return nil, errors.Errorf("at least one proposal response is required")
+// CreateSignedTx extract response, then signs and generates an envelope
+func CreateSignedTx(proposal *peer.Proposal, responses []*peer.ProposalResponse) (*common.Envelope, error) {
+	if len(responses) == 0 {
+		return nil, errors.Errorf("Fail to find any response")
 	}
 
-	// the original header
-	hdr, err := GetHeader(proposal.Header)
-	if err != nil {
-		return nil, err
-	}
-
-	// the original payload
-	pPayl, err := GetChaincodeProposalPayload(proposal.Payload)
-	if err != nil {
-		return nil, err
-	}
-
-	// check that the signer is the same that is referenced in the header
-	// TODO: maybe worth removing?
-	identityBytes, err := config.identity.Serialize()
-	if err != nil {
-		return nil, err
-	}
-
-	shdr, err := GetSignatureHeader(hdr.SignatureHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	if bytes.Compare(identityBytes, shdr.Creator) != 0 {
-		return nil, errors.Errorf("signer must be the same as the one referenced in the header")
-	}
-
-	// get header extensions so we have the visibility field
-	_, err = GetChaincodeHeaderExtension(hdr)
-	if err != nil {
-		return nil, err
-	}
-
-	endorsements := make([]*peer.Endorsement, 0)
-
-	// ensure that all actions are bitwise equal and that they are successful
-	var a1 []byte
-	for n, r := range resps {
-		if n == 0 {
-			a1 = r.Payload
-			if r.Response.Status < 200 || r.Response.Status >= 400 {
-				return nil, errors.Errorf("proposal response was not successful, error code %d, msg %s", r.Response.Status, r.Response.Message)
-			}
-		}
-		if bytes.Compare(a1, r.Payload) != 0 {
-			return nil, errors.Errorf("ProposalResponsePayloads from Peers do not match")
-		}
-		endorsements = append(endorsements, r.Endorsement)
-	}
 	if config.CheckRWSet {
-		// dd: open rwset to do some check
-		pRespPayload, err := protoutil.UnmarshalProposalResponsePayload(a1)
-		if err != nil {
-			return nil, err
-		}
-		respPayload, err := protoutil.UnmarshalChaincodeAction(pRespPayload.Extension)
-		if err != nil {
-			return nil, err
-		}
-		var txRWSet *rwsetutil.TxRwSet
-		txRWSet = &rwsetutil.TxRwSet{}
-		if err = txRWSet.FromProtoBytes(respPayload.Results); err != nil {
-			return nil, err
-		}
-
-		for _, rwset := range txRWSet.NsRwSets {
-			fmt.Println("namespace:", rwset.NameSpace)
-			fmt.Println("read set")
-			for _, rset := range rwset.KvRwSet.Reads {
-				// fmt.Println(rset.GetKey(), rset.GetVersion())
-				fmt.Println(rset.String())
-			}
-			fmt.Println("write set")
-			for _, wset := range rwset.KvRwSet.Writes {
-				fmt.Println(wset.String())
-
-			}
-		}
+		mustPrintTXRWSet(responses)
 	}
 
-	// create ChaincodeEndorsedAction
-	cea := &peer.ChaincodeEndorsedAction{ProposalResponsePayload: a1, Endorsements: endorsements}
-
-	// obtain the bytes of the proposal payload that will go to the transaction
-	propPayloadBytes, err := protoutil.GetBytesProposalPayloadForTx(pPayl) //, hdrExt.PayloadVisibility
+	header, err := getHeader(proposal.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	// serialize the chaincode action payload
-	cap := &peer.ChaincodeActionPayload{ChaincodeProposalPayload: propPayloadBytes, Action: cea}
-	capBytes, err := protoutil.GetBytesChaincodeActionPayload(cap)
+	ccActionPayload, err := generateChaincodeActionPayload(proposal, responses)
 	if err != nil {
 		return nil, err
 	}
 
-	// create a transaction
-	taa := &peer.TransactionAction{Header: hdr.SignatureHeader, Payload: capBytes}
-	taas := make([]*peer.TransactionAction, 1)
-	taas[0] = taa
-	tx := &peer.Transaction{Actions: taas}
-	// serialize the tx
-	txBytes, err := protoutil.GetBytesTransaction(tx)
+	tx, err := generateTransaction(header, ccActionPayload)
 	if err != nil {
 		return nil, err
 	}
 
-	// create the payload
-	payl := &common.Payload{Header: hdr, Data: txBytes}
-	paylBytes, err := protoutil.GetBytesPayload(payl)
+	payload, err := generatePayload(header, tx)
 	if err != nil {
 		return nil, err
 	}
 
-	// sign the payload
-	sig, err := config.identity.Sign(paylBytes)
-	if err != nil {
-		return nil, err
-	}
-	// here's the envelope
-	return &common.Envelope{Payload: paylBytes, Signature: sig}, nil
+	return generateEnvelope(payload)
 }
 
 func CreateSignedDeliverNewestEnv() (*common.Envelope, error) {
@@ -246,38 +149,43 @@ func CreateSignedDeliverNewestEnv() (*common.Envelope, error) {
 	)
 }
 
-func GetHeader(bytes []byte) (*common.Header, error) {
-	hdr := &common.Header{}
-	err := proto.Unmarshal(bytes, hdr)
-	return hdr, errors.Wrap(err, "error unmarshaling Header")
-}
+func getHeader(headerBytes []byte) (*common.Header, error) {
+	header := &common.Header{}
+	err := proto.Unmarshal(headerBytes, header)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling Header")
+	}
 
-func GetChaincodeProposalPayload(bytes []byte) (*peer.ChaincodeProposalPayload, error) {
-	cpp := &peer.ChaincodeProposalPayload{}
-	err := proto.Unmarshal(bytes, cpp)
-	return cpp, errors.Wrap(err, "error unmarshaling ChaincodeProposalPayload")
-}
-
-func GetSignatureHeader(bytes []byte) (*common.SignatureHeader, error) {
-	return UnmarshalSignatureHeader(bytes)
-}
-
-func GetChaincodeHeaderExtension(hdr *common.Header) (*peer.ChaincodeHeaderExtension, error) {
-	chdr, err := UnmarshalChannelHeader(hdr.ChannelHeader)
+	err = checkHeaderSignerValidity(header)
 	if err != nil {
 		return nil, err
 	}
 
-	chaincodeHdrExt := &peer.ChaincodeHeaderExtension{}
-	err = proto.Unmarshal(chdr.Extension, chaincodeHdrExt)
-	return chaincodeHdrExt, errors.Wrap(err, "error unmarshaling ChaincodeHeaderExtension")
+	return header, nil
 }
 
-// UnmarshalChannelHeader returns a ChannelHeader from bytes
-func UnmarshalChannelHeader(bytes []byte) (*common.ChannelHeader, error) {
-	chdr := &common.ChannelHeader{}
-	err := proto.Unmarshal(bytes, chdr)
-	return chdr, errors.Wrap(err, "error unmarshaling ChannelHeader")
+// checkHeaderSignerValidity check that the signer is the same
+// that is referenced in the header.
+func checkHeaderSignerValidity(header *common.Header) error {
+	identityBytes, err := config.identity.Serialize()
+	if err != nil {
+		return err
+	}
+
+	signatureHeader, err := GetSignatureHeader(header.SignatureHeader)
+	if err != nil {
+		return err
+	}
+
+	if bytes.Compare(identityBytes, signatureHeader.Creator) != 0 {
+		return errors.Errorf("signer must be the same as the one referenced in the header")
+	}
+
+	return nil
+}
+
+func GetSignatureHeader(signatureHeaderBytes []byte) (*common.SignatureHeader, error) {
+	return UnmarshalSignatureHeader(signatureHeaderBytes)
 }
 
 func UnmarshalSignatureHeader(bytes []byte) (*common.SignatureHeader, error) {
@@ -286,4 +194,167 @@ func UnmarshalSignatureHeader(bytes []byte) (*common.SignatureHeader, error) {
 		return nil, errors.Wrap(err, "error unmarshaling SignatureHeader")
 	}
 	return sh, nil
+}
+
+func collectEndorsements(responses []*peer.ProposalResponse) ([]*peer.Endorsement, error) {
+	err := checkResponsesStatusValidity(responses)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkResponsePayloadValidity(responses)
+	if err != nil {
+		return nil, err
+	}
+
+	endorsements := make([]*peer.Endorsement, len(responses))
+	for i, r := range responses {
+		endorsements[i] = r.Endorsement
+	}
+	return endorsements, nil
+}
+
+func checkResponsesStatusValidity(responses []*peer.ProposalResponse) error {
+	for _, r := range responses {
+		if r.Response.Status < 200 || r.Response.Status >= 400 {
+			return errors.Errorf("proposal response was not successful, error code %d, msg %s", r.Response.Status, r.Response.Message)
+		}
+	}
+	return nil
+}
+
+func checkResponsePayloadValidity(responses []*peer.ProposalResponse) error {
+	payloadBytes := getProposalResponsePayloadByte(responses)
+	for i, r := range responses {
+		if i == 0 {
+			continue
+		}
+		if bytes.Compare(payloadBytes, r.Payload) != 0 {
+			return errors.Errorf("ProposalResponsePayloads from Peers do not match")
+		}
+	}
+	return nil
+}
+
+func getProposalResponsePayloadByte(responses []*peer.ProposalResponse) []byte {
+	return responses[0].Payload
+}
+
+func GetChaincodeProposalPayload(ccProposalPayloadBytes []byte) (*peer.ChaincodeProposalPayload, error) {
+	ccProposalPayload := &peer.ChaincodeProposalPayload{}
+	err := proto.Unmarshal(ccProposalPayloadBytes, ccProposalPayload)
+	return ccProposalPayload, errors.Wrap(err, "error unmarshaling ChaincodeProposalPayload")
+}
+
+func mustPrintTXRWSet(responses []*peer.ProposalResponse) {
+	proposalResponsePayloadByte := getProposalResponsePayloadByte(responses)
+	proposalResponsePayload, err := protoutil.UnmarshalProposalResponsePayload(proposalResponsePayloadByte)
+	if err != nil {
+		logger.Errorf("Fail to unmarshal ProposalResponsePayload: %v", err)
+	}
+
+	ccAction, err := protoutil.UnmarshalChaincodeAction(proposalResponsePayload.Extension)
+	if err != nil {
+		logger.Errorf("Fail to unmarshal ChaincodeAction: %v", err)
+	}
+
+	txRWSet := &rwsetutil.TxRwSet{}
+	err = txRWSet.FromProtoBytes(ccAction.Results)
+	if err != nil {
+		if err != nil {
+			logger.Errorf("Fail to deserializes protobytes into TxReadWriteSet proto message: %v", err)
+		}
+	}
+
+	for _, rwset := range txRWSet.NsRwSets {
+		fmt.Println("Namespace:", rwset.NameSpace)
+
+		fmt.Println("Read Set")
+		for _, rset := range rwset.KvRwSet.Reads {
+			fmt.Println(rset.String())
+		}
+
+		fmt.Println("Write Set")
+		for _, wset := range rwset.KvRwSet.Writes {
+			fmt.Println(wset.String())
+		}
+	}
+}
+
+func generateChaincodeActionPayload(proposal *peer.Proposal, responses []*peer.ProposalResponse) (*peer.ChaincodeActionPayload, error) {
+	ccProposalPayload, err := GetChaincodeProposalPayload(proposal.Payload)
+	if err != nil {
+		return nil, err
+	}
+	proposalPayloadBytes, err := protoutil.GetBytesProposalPayloadForTx(ccProposalPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	endorsements, err := collectEndorsements(responses)
+	if err != nil {
+		return nil, err
+	}
+
+	ccEndorsedAction := &peer.ChaincodeEndorsedAction{
+		ProposalResponsePayload: getProposalResponsePayloadByte(responses),
+		Endorsements:            endorsements,
+	}
+
+	ccActionPayload := &peer.ChaincodeActionPayload{
+		ChaincodeProposalPayload: proposalPayloadBytes,
+		Action:                   ccEndorsedAction,
+	}
+	return ccActionPayload, nil
+}
+
+func generateTransaction(header *common.Header, ccActionPayload *peer.ChaincodeActionPayload) (*peer.Transaction, error) {
+	ccActionPayloadBytes, err := protoutil.GetBytesChaincodeActionPayload(ccActionPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a transaction
+	txAction := &peer.TransactionAction{
+		Header:  header.SignatureHeader,
+		Payload: ccActionPayloadBytes,
+	}
+	txActions := make([]*peer.TransactionAction, 1)
+	txActions[0] = txAction
+
+	tx := &peer.Transaction{Actions: txActions}
+	return tx, nil
+}
+
+func generatePayload(header *common.Header, tx *peer.Transaction) (*common.Payload, error) {
+	txBytes, err := protoutil.GetBytesTransaction(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	// create the payload
+	payload := &common.Payload{
+		Header: header,
+		Data:   txBytes,
+	}
+
+	return payload, nil
+}
+
+func generateEnvelope(payload *common.Payload) (*common.Envelope, error) {
+	payloadBytes, err := protoutil.GetBytesPayload(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := config.identity.Sign(payloadBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	envelope := &common.Envelope{
+		Payload:   payloadBytes,
+		Signature: signature,
+	}
+	return envelope, nil
 }
