@@ -21,7 +21,8 @@ var (
 )
 
 var (
-	printCh       chan string
+	logCh         chan string
+	reportCh      chan string
 	unsignedCh    chan *Element
 	signedChs     []chan *Element
 	endorsedCh    chan *Element
@@ -77,22 +78,35 @@ func WriteLogToFile(printWG *sync.WaitGroup) {
 	}
 	defer logFile.Close()
 
+	reportFile, err := os.Create(config.ReportPath)
+	if err != nil {
+		logger.Fatalf("Failed to create report file %s: %v\n", config.ReportPath, err)
+	}
+	defer reportFile.Close()
+
 	for {
 		select {
-		case s := <-printCh:
+		case s := <-logCh:
 			logFile.WriteString(s + "\n")
+		case s := <-reportCh:
+			reportFile.WriteString(s + "\n")
 		case <-doneCh:
-			for len(printCh) > 0 {
-				logFile.WriteString(<-printCh + "\n")
+			for len(logCh) > 0 {
+				logFile.WriteString(<-logCh + "\n")
 			}
 			return
 		}
 	}
 }
 
-func NewPrintChannel() chan string {
-	printCh := make(chan string, CH_MAX_CAPACITY)
-	return printCh
+func NewLogChannel() chan string {
+	logCh := make(chan string, CH_MAX_CAPACITY)
+	return logCh
+}
+
+func NewReportChannel() chan string {
+	reportCh := make(chan string, CH_MAX_CAPACITY)
+	return reportCh
 }
 
 func NewUnsignedChannel() chan *Element {
@@ -142,7 +156,8 @@ func initDoneChannel() chan struct{} {
 }
 
 func initChannels() {
-	printCh = NewPrintChannel()
+	logCh = NewLogChannel()
+	reportCh = NewReportChannel()
 	unsignedCh = NewUnsignedChannel()
 	signedChs = NewSignedChannel()
 	endorsedCh = NewEndorsedChannel()
@@ -157,12 +172,37 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		duration := time.Since(startTime)
 		logger.Infof("Finish processing transactions")
 
-		printCh <- fmt.Sprintf("Number of ALL Transactions: %d", config.TxNum)
-		printCh <- fmt.Sprintf("Number of VALID Transactions: %d", int32(config.TxNum)-Metric.Abort)
-		printCh <- fmt.Sprintf("Number of ABORTED Transactions: %d", Metric.Abort)
-		printCh <- fmt.Sprintf("Abort Rate: %f", float64(Metric.Abort)/float64(config.TxNum)*100)
-		printCh <- fmt.Sprintf("Duration: %+v", duration)
-		printCh <- fmt.Sprintf("TPS: %f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
+		reportCh <- fmt.Sprintf("Number of ALL Transactions: %d", config.TxNum)
+		reportCh <- fmt.Sprintf("Number of VALID Transactions: %d", int32(config.TxNum)-Metric.Abort)
+		reportCh <- fmt.Sprintf("Number of ABORTED Transactions: %d", Metric.Abort)
+		reportCh <- fmt.Sprintf("Duration: %.3fs", float64(duration.Milliseconds())/float64(1e3))
+		reportCh <- fmt.Sprintf("TPS: %f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
+		reportCh <- fmt.Sprintf("Abort Rate: %.3f%%", float64(Metric.Abort)/float64(config.TxNum)*100)
+
+		reportCh <- fmt.Sprintf("id    endorse(ms) integrate(ms) order&commit(ms)")
+		for i, tk := range timeKeepers.transactions {
+			endorsementDuration := float64(tk.EndorsedTime-tk.ProposedTime) / float64(1e6)
+			if endorsementDuration < 0.0 {
+				endorsementDuration = 0.0
+			}
+
+			integrationDuration := float64(tk.BroadcastTime-tk.EndorsedTime) / float64(1e6)
+			if integrationDuration < 0.0 {
+				integrationDuration = 0.0
+			}
+
+			orderingDuration := float64(tk.ObservedTime-tk.BroadcastTime) / float64(1e6)
+			if orderingDuration < 0.0 {
+				orderingDuration = 0.0
+			}
+
+			reportCh <- fmt.Sprintf("%-5d %11.2f %13.2f %16.2f",
+				i,
+				endorsementDuration,
+				integrationDuration,
+				orderingDuration,
+			)
+		}
 
 		// Closing 'doneCh', a channel which is never sent an element, is a common technique to notify ending in Golang
 		// More information: https://go101.org/article/channel-use-cases.html#check-closed-status
@@ -178,6 +218,7 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 // unsignedCh -> signedCh -> endorsedCh -> integratedCh
 func End2End() {
 	initChannels()
+	initTimeKeepers()
 
 	printWG := &sync.WaitGroup{}
 	go WriteLogToFile(printWG)

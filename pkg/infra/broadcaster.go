@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"fmt"
 	"io"
 	"time"
 
@@ -88,8 +87,7 @@ func (b *Broadcaster) send() {
 		case element := <-b.inCh:
 			b.getToken()
 
-			broadcastTime := time.Now().UnixNano()
-			printCh <- fmt.Sprintf("%-10s %d %4d %s %d", "Broadcast", broadcastTime, txid2id[element.Txid], element.Txid, b.broadcasterIndex)
+			timeKeepers.keepBroadcastTime(element.Txid, b.broadcasterIndex)
 
 			err := b.client.Send(element.Envelope)
 			if err != nil {

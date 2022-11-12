@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
@@ -105,8 +104,7 @@ func (p *Proposer) startClient(clientIndex int) {
 
 			p.getToken()
 
-			proposedTime := time.Now().UnixNano()
-			printCh <- fmt.Sprintf("%-10s %d %4d %s %d %d %d", "Proposed", proposedTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
+			timeKeepers.keepProposedTime(element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 
 			// send proposal
 			resp, err := p.client.ProcessProposal(context.Background(), element.SignedProposal)
@@ -124,8 +122,8 @@ func (p *Proposer) startClient(clientIndex int) {
 			if len(element.Responses) >= config.EndorserNum {
 				// Collect enough endorsement for this transaction
 				p.outCh <- element
-				endorsedTime := time.Now().UnixNano()
-				printCh <- fmt.Sprintf("%-10s %d %4d %s %d %d %d", "Endorsed", endorsedTime, txid2id[element.Txid], element.Txid, p.endorserIndex, p.connIndex, clientIndex)
+
+				timeKeepers.keepEndorsedTime(element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 			}
 			element.lock.Unlock()
 

@@ -68,8 +68,10 @@ type Config struct {
 	// If true, print the read set and write set to STDOUT
 	CheckRWSet bool `yaml:"checkRWSet"`
 
-	LogPath string `yaml:"logPath"` // path of the log file
-	Seed    int    `yaml:"seed"`    // random seed
+	LogPath    string `yaml:"logPath"`    // path of the log file
+	ReportPath string `yaml:"reportPath"` // path of the report file
+
+	Seed int `yaml:"seed"` // random seed
 }
 
 func (c *Config) mustLoadRawConfigFromFile(filename string) {

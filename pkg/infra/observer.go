@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
@@ -53,10 +52,8 @@ func (o *Observer) processFilteredBlock() {
 	for {
 		select {
 		case fb := <-o.deliverCh:
-			observedTime := time.Now().UnixNano()
 			for _, tx := range fb.FilteredBlock.FilteredTransactions {
-				txid := tx.GetTxid()
-				printCh <- fmt.Sprintf("%-10s %d %4d %s %s", "Observed", observedTime, txid2id[txid], txid, tx.TxValidationCode)
+				timeKeepers.keepObservedTime(tx.GetTxid(), tx.TxValidationCode)
 			}
 
 			for _, tx := range fb.FilteredBlock.FilteredTransactions {
