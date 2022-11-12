@@ -7,7 +7,7 @@ import (
 
 	"github.com/GwanWingYan/fabric-protos-go/orderer"
 	"github.com/GwanWingYan/fabric-protos-go/peer"
-	"github.com/GwanWingYan/tape/pkg/internal/pkg/comm"
+	"github.com/GwanWingYan/tape/pkg/comm"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
