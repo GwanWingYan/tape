@@ -17,22 +17,18 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 	// connNum connections for one peer
 	// one Proposer for one connection
 
-	var proposers [][]*Proposer
-
+	proposers := make([][]*Proposer, config.EndorserNum)
 	tokenCh := make(chan struct{}, int(config.Burst))
-
-	// The expect throughput for each client
 	expectTPS := float64(config.Rate) / float64(config.ConnNum*config.ClientPerConnNum*config.EndorserGroupNum)
-
 	for i, endorser := range config.Endorsers {
-		proposersForNode := make([]*Proposer, config.ConnNum)
+		proposers[i] = make([]*Proposer, config.ConnNum)
 		for j := 0; j < config.ConnNum; j++ {
 			client, err := CreateEndorserClient(endorser)
 			if err != nil {
 				logger.Fatalf("Fail to create No. %d connection for endorser %s: %v", j, endorser.Address, err)
 			}
 
-			proposersForNode[j] = &Proposer{
+			proposers[i][j] = &Proposer{
 				endorserIndex: i,
 				connIndex:     j,
 				expectTPS:     expectTPS,
@@ -43,7 +39,6 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 				tokenCh:       tokenCh,
 			}
 		}
-		proposers = append(proposers, proposersForNode)
 	}
 
 	return &Proposers{
