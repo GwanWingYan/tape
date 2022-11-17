@@ -68,7 +68,7 @@ func (o *Observer) processFilteredBlock() {
 				close(observerEndCh)
 				return
 			}
-		case <-time.After(20 * time.Second):
+		case <-time.After(30 * time.Second):
 			close(observerEndCh)
 			return
 		}

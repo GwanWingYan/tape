@@ -22,7 +22,7 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 	for i, endorser := range config.Endorsers {
 		proposers[i] = make([]*Proposer, config.ConnNum)
 		for j := 0; j < config.ConnNum; j++ {
-			client, err := CreateEndorserClient(endorser)
+			grpcClient, err := CreateEndorserClient(endorser)
 			if err != nil {
 				logger.Fatalf("Fail to create No. %d connection for endorser %s: %v", j, endorser.Address, err)
 			}
@@ -31,7 +31,7 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 				endorserIndex: i,
 				connIndex:     j,
 				expectTPS:     expectTPS,
-				client:        client,
+				grpcClient:    grpcClient,
 				address:       endorser.Address,
 				inCh:          inCh[i],
 				outCh:         outCh,
@@ -77,7 +77,7 @@ type Proposer struct {
 	endorserIndex int
 	connIndex     int
 	expectTPS     float64
-	client        peer.EndorserClient
+	grpcClient    peer.EndorserClient
 	address       string
 	inCh          chan *Element
 	outCh         chan *Element
@@ -96,6 +96,10 @@ func (p *Proposer) Start() {
 	}
 }
 
+type ProposerClient struct {
+	clientIndex int
+}
+
 func (p *Proposer) startClient(clientIndex int) {
 	for {
 		select {
@@ -107,7 +111,7 @@ func (p *Proposer) startClient(clientIndex int) {
 			timeKeepers.keepProposedTime(element.Txid, p.endorserIndex, p.connIndex, clientIndex)
 
 			// send proposal
-			resp, err := p.client.ProcessProposal(context.Background(), element.SignedProposal)
+			resp, err := p.grpcClient.ProcessProposal(context.Background(), element.SignedProposal)
 			if err != nil || resp.Response.Status < 200 || resp.Response.Status >= 400 {
 				if resp == nil {
 					logger.Errorf("Error processing proposal: %v, status: unknown, address: %s \n", err, p.address)

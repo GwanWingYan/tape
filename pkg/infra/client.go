@@ -31,7 +31,7 @@ func generateClientConfig(node Node) comm.ClientConfig {
 	certs := collectTLSCACertsBytes(node)
 
 	clientConfig := comm.ClientConfig{
-		Timeout: 5 * time.Second,
+		Timeout: 30 * time.Second,
 		SecOpts: comm.SecureOptions{
 			UseTLS:            false,
 			RequireClientCert: false,
