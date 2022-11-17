@@ -4,35 +4,28 @@ type Signers struct {
 	Signers []*Signer
 }
 
-func NewSigners(inCh chan *Element, outCh []chan *Element) *Signers {
-	signerList := make([]*Signer, config.SignerNum)
-	for i := 0; i < config.SignerNum; i++ {
-		signerList[i] = &Signer{
-			inCh:  inCh,
-			outCh: outCh,
-		}
-	}
-
-	return &Signers{Signers: signerList}
-}
-
-func (ss *Signers) StartAsync() {
-	for _, signer := range ss.Signers {
-		go signer.Start()
-	}
-}
-
 type Signer struct {
 	inCh  chan *Element
 	outCh []chan *Element
 }
 
-// Start collects an unsigned transactions from the 'raw' channel,
+func NewSigner(inCh chan *Element, outCh []chan *Element) *Signer {
+	return &Signer{
+		inCh:  inCh,
+		outCh: outCh,
+	}
+}
+
+// StartSync collects an unsigned transactions from the 'raw' channel,
 // sign it, then send it to the 'signed' channel of each endorser
-func (s *Signer) Start() {
+func (s *Signer) StartSync() {
 	for {
 		select {
 		case e := <-s.inCh:
+			if e == nil { // End
+				return
+			}
+
 			// sign the raw transaction
 			err := s.SignElement(e)
 			if err != nil {

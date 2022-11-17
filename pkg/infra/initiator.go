@@ -59,4 +59,10 @@ func (it *Initiator) StartSync() {
 	for i := 0; i < len(it.proposals); i++ {
 		it.outCh <- &Element{Proposal: it.proposals[i], Txid: it.txids[i]}
 	}
+
+	it.End()
+}
+
+func (it *Initiator) End() {
+	it.outCh <- nil
 }

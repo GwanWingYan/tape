@@ -53,7 +53,6 @@ type Config struct {
 
 	ConnNum          int `yaml:"connNum"`          // number of connection
 	ClientPerConnNum int `yaml:"clientPerConnNum"` // number of client per connection
-	SignerNum        int `yaml:"signerNum"`        // number of signer
 	IntegratorNum    int `yaml:"integratorNum"`    // number of integrator
 	BroadcasterNum   int `yaml:"broadcasterNum"`   // number of orderer client
 	EndorserNum      int // number of endorsers

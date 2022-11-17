@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	CH_MAX_CAPACITY     = 100010
+	CH_MAX_CAPACITY     = 1e6
 	endorsementFilename = "ENDORSEMENT.txt"
 )
 
@@ -108,7 +108,7 @@ func NewUnsignedChannel() chan *Element {
 	// unsignedCh stores all unsigned transactions
 	// Sender: initiator
 	// Receiver: signers
-	unsignedCh := make(chan *Element, config.Burst)
+	unsignedCh := make(chan *Element, CH_MAX_CAPACITY)
 	return unsignedCh
 }
 
@@ -119,7 +119,7 @@ func NewSignedChannel() []chan *Element {
 	// Receiver: proposers
 	signedChs := make([]chan *Element, config.EndorserNum)
 	for i := 0; i < config.EndorserNum; i++ {
-		signedChs[i] = make(chan *Element, config.Burst)
+		signedChs[i] = make(chan *Element, CH_MAX_CAPACITY)
 	}
 	return signedChs
 }
@@ -219,20 +219,20 @@ func End2End() {
 	go WriteLogToFile(printWG)
 
 	initiator := NewInitiator(unsignedCh)
-	signers := NewSigners(unsignedCh, signedChs)
+	signer := NewSigner(unsignedCh, signedChs)
 	proposers := NewProposers(signedChs, endorsedCh)
 	integrators := NewIntegrators(endorsedCh, integratedCh)
 	broadcasters := NewBroadcasters(integratedCh)
 	observer := NewObserver()
 
-	proposers.StartAsync()
 	integrators.StartAsync()
 	broadcasters.StartAsync()
 	observer.StartAsync()
 	initiator.StartSync() // Block until all raw transactions are ready
+	signer.StartSync()    // Block until all transactions are signed
 
 	startTime := time.Now()
-	signers.StartAsync()
+	proposers.StartAsync()
 
 	WaitObserverEnd(startTime, printWG)
 }
