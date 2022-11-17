@@ -18,27 +18,6 @@ var (
 	chs = []rune("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()=")
 )
 
-func getName(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = chs[rand.Intn(len(chs))]
-	}
-	return string(b)
-}
-
-func randomId(n int) int {
-	res := rand.Intn(n)
-	return res
-}
-
-func initSeed() {
-	if config.Seed == 0 {
-		rand.Seed(time.Now().UnixNano())
-	} else {
-		rand.Seed(int64(config.Seed))
-	}
-}
-
 type WorkloadGenerator struct {
 	ccArgsList [][]string
 	accounts   []string
@@ -58,6 +37,14 @@ func generateCCArgsList() [][]string {
 	}
 
 	return wg.ccArgsList
+}
+
+func initSeed() {
+	if config.Seed == 0 {
+		rand.Seed(time.Now().UnixNano())
+	} else {
+		rand.Seed(int64(config.Seed))
+	}
 }
 
 func NewWorkloadGenerator() *WorkloadGenerator {
@@ -115,6 +102,14 @@ func (wg *WorkloadGenerator) generateCCArgsPut() []string {
 	result = append(result, strconv.Itoa(1e9)) // checking balance
 
 	return result
+}
+
+func getName(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = chs[rand.Intn(len(chs))]
+	}
+	return string(b)
 }
 
 func (wg *WorkloadGenerator) generateCCArgsConflict() []string {

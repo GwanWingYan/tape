@@ -21,7 +21,7 @@ func NewInitiator(outCh chan *Element) *Initiator {
 
 	// Create proposal and id for all generated transactions
 	ccArgsList := generateCCArgsList()
-	session := getName(20)
+	session := getSession()
 	for i := 0; i < config.TxNum; i++ {
 		ccArgs := ccArgsList[i]
 
@@ -49,8 +49,15 @@ func NewInitiator(outCh chan *Element) *Initiator {
 	return it
 }
 
+func getSession() string {
+	if config.Session != "" {
+		return config.Session
+	}
+	return getName(20)
+}
+
 func generateCustomTXID(i int, session string) string {
-	return strconv.Itoa(i) + "_+=+_" + session + "_+=+_" + getName(20)
+	return strconv.Itoa(config.TxIDStart+i) + "_+=+_" + session + "_+=+_" + getName(20)
 }
 
 // StartSync sends all unsigned transactions (raw transactions) to the channel 'raw'

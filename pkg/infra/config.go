@@ -47,9 +47,11 @@ type Config struct {
 	Rate  int `yaml:"rate"`  // average speed of transaction generation
 	Burst int `yaml:"burst"` // maximum speed of transaction generation
 
-	TxNum  int    `yaml:"txNum"`  // number of transactions
-	TxTime int    `yaml:"txTime"` // maximum execution time
-	TxType string `yaml:"txType"` // transaction type ['put', 'conflict']
+	TxNum     int    `yaml:"txNum"`     // number of transactions
+	TxTime    int    `yaml:"txTime"`    // maximum execution time
+	TxType    string `yaml:"txType"`    // transaction type ['put', 'conflict']
+	TxIDStart int    `yaml:"txIDStart"` // the start of TX ID
+	Session   string `yaml:"session"`   // session name
 
 	ConnNum          int `yaml:"connNum"`          // number of connection
 	ClientPerConnNum int `yaml:"clientPerConnNum"` // number of client per connection
