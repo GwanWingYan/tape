@@ -18,7 +18,7 @@ func NewProposers(inCh []chan *Element, outCh chan *Element) *Proposers {
 
 	proposers := make([][]*Proposer, config.EndorserNum)
 	tokenCh := make(chan struct{}, int(config.Burst))
-	expectTPS := float64(config.Rate) / float64(config.ConnNum*config.ClientPerConnNum*config.EndorserGroupNum)
+	expectTPS := float64(config.Rate) / float64(config.ConnNum*config.ClientPerConnNum)
 	for i, endorser := range config.Endorsers {
 		proposers[i] = make([]*Proposer, config.ConnNum)
 		for j := 0; j < config.ConnNum; j++ {
@@ -57,7 +57,7 @@ func (ps *Proposers) StartAsync() {
 				ps.tokenCh <- struct{}{}
 			}
 		} else {
-			interval := 1e9 / float64(config.Rate) * float64(config.EndorserNum) / float64(config.EndorserGroupNum)
+			interval := 1e9 / float64(config.Rate) * float64(config.EndorserNum)
 			for {
 				time.Sleep(time.Duration(interval) * time.Nanosecond)
 				ps.tokenCh <- struct{}{}

@@ -1,9 +1,5 @@
 package infra
 
-import (
-	"math/rand"
-)
-
 type Signers struct {
 	Signers []*Signer
 }
@@ -34,8 +30,6 @@ type Signer struct {
 // Start collects an unsigned transactions from the 'raw' channel,
 // sign it, then send it to the 'signed' channel of each endorser
 func (s *Signer) Start() {
-	endorsersPerGroup := int(len(s.outCh) / config.EndorserGroupNum)
-
 	for {
 		select {
 		case e := <-s.inCh:
@@ -45,11 +39,10 @@ func (s *Signer) Start() {
 				logger.Fatalf("Fail to sign transaction %s: %v", e.Txid, err)
 			}
 
-			// Randomly select a groupIndex of endorsers to endorse the transaction
-			groupIndex := rand.Intn(config.EndorserGroupNum)
-			endorserStartIndex := int(config.EndorserGroupNum * groupIndex)
-			endorserEndIndex := endorserStartIndex + endorsersPerGroup
-			for i := endorserStartIndex; i < endorserEndIndex; i++ {
+			// send the signed transactions to each endorser's proposers
+			startIndex := 0
+			endIndex := config.EndorserNum
+			for i := startIndex; i < endIndex; i++ {
 				s.outCh[i] <- e
 			}
 

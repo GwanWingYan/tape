@@ -57,7 +57,6 @@ type Config struct {
 	IntegratorNum    int `yaml:"integratorNum"`    // number of integrator
 	BroadcasterNum   int `yaml:"broadcasterNum"`   // number of orderer client
 	EndorserNum      int // number of endorsers
-	EndorserGroupNum int `yaml:"endorserGroupNum"` // number of endorser group
 
 	// If true, let the protoutil generate txid automatically
 	// If false, encode the txid by us
@@ -177,7 +176,7 @@ func GetTLSCACerts(file string) ([]byte, error) {
 	return in, nil
 }
 
-//TODO
+// TODO
 func (n *Node) mustLoadConfig() {
 	certByte, err := GetTLSCACerts(n.TLSCACert)
 	if err != nil && err != itemNotProvidedError {
