@@ -89,6 +89,9 @@ func WriteLogToFile(printWG *sync.WaitGroup) {
 			for len(logCh) > 0 {
 				logFile.WriteString(<-logCh + "\n")
 			}
+			for len(reportCh) > 0 {
+				reportFile.WriteString(<-reportCh + "\n")
+			}
 			return
 		}
 	}
@@ -192,7 +195,7 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 			}
 
 			reportCh <- fmt.Sprintf("%-5d %11.2f %13.2f %16.2f",
-				i,
+				config.TxIDStart+i,
 				endorsementDuration,
 				integrationDuration,
 				orderingDuration,
