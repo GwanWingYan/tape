@@ -47,11 +47,13 @@ type Config struct {
 	Rate  int `yaml:"rate"`  // average speed of transaction generation
 	Burst int `yaml:"burst"` // maximum speed of transaction generation
 
-	TxNum     int    `yaml:"txNum"`     // number of transactions
-	TxTime    int    `yaml:"txTime"`    // maximum execution time
-	TxType    string `yaml:"txType"`    // transaction type ['put', 'conflict']
-	TxIDStart int    `yaml:"txIDStart"` // the start of TX ID
-	Session   string `yaml:"session"`   // session name
+	TxNum           int     `yaml:"txNum"`           // number of transactions
+	TxTime          int     `yaml:"txTime"`          // maximum execution time
+	TxType          string  `yaml:"txType"`          // transaction type ['put', 'conflict']
+	TxIDStart       int     `yaml:"txIDStart"`       // the start of TX ID
+	Session         string  `yaml:"session"`         // session name
+	HotAccountRatio float64 `yaml:"hotAccountRatio"` // percentage of hot accounts
+	ConflictRatio   float64 `yaml:"conflictRatio"`   // Percentage of conflict
 
 	ConnNum          int `yaml:"connNum"`          // number of connection
 	ClientPerConnNum int `yaml:"clientPerConnNum"` // number of client per connection
@@ -111,9 +113,20 @@ func (c *Config) mustValid() {
 	}
 
 	if c.Rate > c.Burst {
-		fmt.Printf("Rate %d is bigger than burst %d, so let rate equal to burst\n", c.Rate, c.Burst)
+		logger.Printf("Rate %d is bigger than burst %d, so let rate equal to burst\n", c.Rate, c.Burst)
 		c.Rate = c.Burst
 	}
+
+	if c.ConflictRatio < 0 || c.ConflictRatio > 1 {
+		logger.Panicf("Conflict ratio %f is not within the range of [0, 1]\n", c.ConflictRatio)
+	}
+
+	if c.HotAccountRatio < 0 || c.HotAccountRatio > 1 {
+		logger.Panicf("Hot account ratio %f is not within the range of [0, 1]\n", c.HotAccountRatio)
+	}
+
+	fmt.Printf("Conflict ratio %f\n", c.ConflictRatio)
+	fmt.Printf("Hot account ratio %f\n", c.HotAccountRatio)
 }
 
 func LoadConfigFromFile(filename string) (*Config, error) {

@@ -115,19 +115,48 @@ func getName(n int) string {
 func (wg *WorkloadGenerator) generateCCArgsConflict() []string {
 	var result []string
 
-	// randomly select 2 different accounts as sender and receiver
-	src := rand.Intn(len(wg.accounts))
-	dst := rand.Intn(len(wg.accounts))
-	for src == dst {
-		dst = rand.Intn(len(wg.accounts))
-	}
+	senderName, receiverName := wg.selectTwoDifferentAccounts()
 
-	result = append(result, "SendPayment")    // function name
-	result = append(result, wg.accounts[src]) // sender id
-	result = append(result, wg.accounts[dst]) // receiver id
-	result = append(result, "1")              // amount
+	result = append(result, "SendPayment") // function name
+	result = append(result, senderName)    // sender name
+	result = append(result, receiverName)  // receiver name
+	result = append(result, "1")           // amount
 
 	return result
+}
+
+func (wg *WorkloadGenerator) selectTwoDifferentAccounts() (string, string) {
+	senderName := wg.selectAccount()
+	receiverName := wg.selectAccount()
+	for senderName == receiverName {
+		receiverName = wg.selectAccount()
+	}
+
+	return senderName, receiverName
+}
+
+func (wg *WorkloadGenerator) selectAccount() string {
+	randomNumber := rand.Float64()
+	if randomNumber < config.ConflictRatio {
+		return wg.selectHotAccount()
+	} else {
+		return wg.selectColdAccount()
+	}
+}
+
+func (wg *WorkloadGenerator) selectHotAccount() string {
+	hotAccountNumber := int(config.HotAccountRatio * float64(len(wg.accounts)))
+	accountID := rand.Intn(hotAccountNumber)
+	accountName := wg.accounts[accountID]
+	return accountName
+}
+
+func (wg *WorkloadGenerator) selectColdAccount() string {
+	hotAccountNumber := int(config.HotAccountRatio * float64(len(wg.accounts)))
+	coldAccountNumber := len(wg.accounts) - hotAccountNumber
+	accountID := rand.Intn(coldAccountNumber) + hotAccountNumber
+	accountName := wg.accounts[accountID]
+	return accountName
 }
 
 func (wg *WorkloadGenerator) mustWriteArgsToFile() {
