@@ -71,6 +71,9 @@ func (o *Observer) processFilteredBlock() {
 		case <-time.After(30 * time.Second):
 			close(observerEndCh)
 			return
+		case <-doneCh:
+			o.client.CloseSend()
+			return
 		}
 	}
 }

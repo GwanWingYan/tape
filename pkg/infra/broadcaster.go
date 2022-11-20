@@ -94,6 +94,7 @@ func (b *Broadcaster) send() {
 				logger.Fatalln(err)
 			}
 		case <-doneCh:
+			b.client.CloseSend()
 			return
 		}
 	}
