@@ -76,7 +76,7 @@ func (wg *WorkloadGenerator) mustLoadAccountsFromFile() {
 		accountID := input.Text()
 		wg.accounts = append(wg.accounts, accountID)
 	}
-	logger.Infof("Load %d accounts from %s\n", len(wg.accounts), accountFilePath)
+	logger.Infof("Load %d accounts from %s", len(wg.accounts), accountFilePath)
 }
 
 func (wg *WorkloadGenerator) generateCCArgs() []string {

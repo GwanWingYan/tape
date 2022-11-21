@@ -80,7 +80,7 @@ func (b *Broadcaster) getToken() {
 
 // send collects and send envelopes to the orderer
 func (b *Broadcaster) send() {
-	logger.Infof("Start broadcasting\n")
+	logger.Infof("Start broadcasting")
 
 	for {
 		select {

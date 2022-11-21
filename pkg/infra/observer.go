@@ -39,7 +39,7 @@ func NewObserver() *Observer {
 
 // StartAsync starts observing
 func (o *Observer) StartAsync() {
-	logger.Infof("Start observer\n")
+	logger.Infof("Start observer")
 
 	// Process FilteredBlock
 	go o.processFilteredBlock()
