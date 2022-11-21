@@ -170,12 +170,14 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		duration := time.Since(startTime)
 		logger.Infof("Finish processing transactions")
 
-		reportCh <- fmt.Sprintf("Number of ALL Transactions: %d", config.TxNum)
-		reportCh <- fmt.Sprintf("Number of VALID Transactions: %d", int32(config.TxNum)-Metric.Abort)
-		reportCh <- fmt.Sprintf("Number of ABORTED Transactions: %d", Metric.Abort)
+		reportCh <- fmt.Sprintf("ALL Transactions: %d", config.TxNum)
+		reportCh <- fmt.Sprintf("VALID Transactions: %d", int32(config.TxNum)-Metric.Abort)
+		reportCh <- fmt.Sprintf("ABORTED Transactions: %d", Metric.Abort)
 		reportCh <- fmt.Sprintf("Duration: %.3fs", float64(duration.Milliseconds())/float64(1e3))
-		reportCh <- fmt.Sprintf("TPS: %f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
+		reportCh <- fmt.Sprintf("TPS: %.3f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
+		reportCh <- fmt.Sprintf("Effective TPS: %.3f", float64(int32(config.TxNum)-Metric.Abort)*1e9/float64(duration.Nanoseconds()))
 		reportCh <- fmt.Sprintf("Abort Rate: %.3f%%", float64(Metric.Abort)/float64(config.TxNum)*100)
+		reportCh <- fmt.Sprintf("Commit Latency: %.3fs", getCommitLatency())
 
 		reportCh <- fmt.Sprintf("id    endorse(ms) integrate(ms) order&commit(ms)")
 		for i, tk := range timeKeepers.transactions {
@@ -209,6 +211,14 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		// Wait for WriteLogToFile() to return
 		printWG.Wait()
 	}
+}
+
+func getCommitLatency() float64 {
+	var result int64 = 0
+	for _, tk := range timeKeepers.transactions {
+		result += tk.ObservedTime - tk.ProposedTime
+	}
+	return float64(result) / float64(config.TxNum) / 1e9
 }
 
 // End2End executes end-to-end benchmark on HLF
