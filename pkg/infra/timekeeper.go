@@ -2,6 +2,7 @@ package infra
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/GwanWingYan/fabric-protos-go/peer"
@@ -12,7 +13,9 @@ var (
 )
 
 type TimeKeepers struct {
-	transactions []*TimeKeeper
+	transactions        []*TimeKeeper
+	commitLatency       []int64
+	commitLatencySorted []int64
 }
 
 type TimeKeeper struct {
@@ -24,7 +27,9 @@ type TimeKeeper struct {
 
 func initTimeKeepers() {
 	timeKeepers = TimeKeepers{
-		transactions: make([]*TimeKeeper, config.TxNum),
+		transactions:        make([]*TimeKeeper, config.TxNum),
+		commitLatency:       make([]int64, config.TxNum),
+		commitLatencySorted: nil,
 	}
 	for i := range timeKeepers.transactions {
 		timeKeepers.transactions[i] = &TimeKeeper{}
@@ -81,4 +86,39 @@ func (tks *TimeKeepers) keepObservedTime(
 	logCh <- fmt.Sprintf("%-10s %d %4d %s %s", "Observed", observedTime, id, txid, validationCode)
 
 	timeKeepers.transactions[id].ObservedTime = observedTime
+	timeKeepers.commitLatency[id] = observedTime - timeKeepers.transactions[id].ProposedTime
+}
+
+func (tks *TimeKeepers) getAverageCommitLatency() float64 {
+	var result int64 = 0
+	for _, cl := range tks.commitLatency {
+		result += cl
+	}
+	return float64(result) / float64(config.TxNum) / 1e9
+}
+
+func (tks *TimeKeepers) getCommitLatencyOfPercentile(p int) float64 {
+	if tks.commitLatencySorted == nil {
+		tks.sortCommitLatency()
+	}
+
+	index := int(float64(p) / 100.0 * float64(config.TxNum))
+	if index < 0 {
+		index = 0
+	} else if index >= config.TxNum {
+		index = config.TxNum - 1
+	}
+
+	return float64(tks.commitLatencySorted[index]) / 1e9
+}
+
+func (tks *TimeKeepers) sortCommitLatency() {
+	tks.commitLatencySorted = make([]int64, len(tks.commitLatency))
+	copy(tks.commitLatencySorted, tks.commitLatency)
+	sort.Slice(
+		tks.commitLatencySorted,
+		func(i, j int) bool {
+			return tks.commitLatencySorted[i] < tks.commitLatencySorted[j]
+		},
+	)
 }

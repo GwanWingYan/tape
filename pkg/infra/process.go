@@ -177,7 +177,12 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		reportCh <- fmt.Sprintf("TPS: %.3f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
 		reportCh <- fmt.Sprintf("Effective TPS: %.3f", float64(int32(config.TxNum)-Metric.Abort)*1e9/float64(duration.Nanoseconds()))
 		reportCh <- fmt.Sprintf("Abort Rate: %.3f%%", float64(Metric.Abort)/float64(config.TxNum)*100)
-		reportCh <- fmt.Sprintf("Commit Latency: %.3fs", getCommitLatency())
+		reportCh <- fmt.Sprintf("Average Commit Latency: %.3fs", timeKeepers.getAverageCommitLatency())
+
+		percentiles := []int{50, 55, 60, 65, 70, 75, 80, 85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100}
+		for _, i := range percentiles {
+			reportCh <- fmt.Sprintf("Commit Latency [%d%%]: %.3fs", i, timeKeepers.getCommitLatencyOfPercentile(i))
+		}
 
 		reportCh <- fmt.Sprintf("id    endorse(ms) integrate(ms) order&commit(ms)")
 		for i, tk := range timeKeepers.transactions {
@@ -211,14 +216,6 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		// Wait for WriteLogToFile() to return
 		printWG.Wait()
 	}
-}
-
-func getCommitLatency() float64 {
-	var result int64 = 0
-	for _, tk := range timeKeepers.transactions {
-		result += tk.ObservedTime - tk.ProposedTime
-	}
-	return float64(result) / float64(config.TxNum) / 1e9
 }
 
 // End2End executes end-to-end benchmark on HLF
