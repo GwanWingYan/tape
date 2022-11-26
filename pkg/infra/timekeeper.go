@@ -14,7 +14,9 @@ var (
 
 type TimeKeepers struct {
 	transactions        []*TimeKeeper
-	commitLatency       []int64
+	endorseLatency      []int64
+	orderCommitLatency  []int64
+	totalLatency        []int64
 	commitLatencySorted []int64
 }
 
@@ -28,7 +30,9 @@ type TimeKeeper struct {
 func initTimeKeepers() {
 	timeKeepers = TimeKeepers{
 		transactions:        make([]*TimeKeeper, config.TxNum),
-		commitLatency:       make([]int64, config.TxNum),
+		endorseLatency:      make([]int64, config.TxNum),
+		orderCommitLatency:  make([]int64, config.TxNum),
+		totalLatency:        make([]int64, config.TxNum),
 		commitLatencySorted: nil,
 	}
 	for i := range timeKeepers.transactions {
@@ -62,6 +66,7 @@ func (tks *TimeKeepers) keepEndorsedTime(
 	logCh <- fmt.Sprintf("%-10s %d %4d %s %d %d %d", "Endorsed", endorsedTime, id, txid, endorserIndex, connIndex, clientIndex)
 
 	timeKeepers.transactions[id].EndorsedTime = endorsedTime
+	timeKeepers.endorseLatency[id] = endorsedTime - timeKeepers.transactions[id].ProposedTime
 }
 
 func (tks *TimeKeepers) keepBroadcastTime(
@@ -86,12 +91,40 @@ func (tks *TimeKeepers) keepObservedTime(
 	logCh <- fmt.Sprintf("%-10s %d %4d %s %s", "Observed", observedTime, id, txid, validationCode)
 
 	timeKeepers.transactions[id].ObservedTime = observedTime
-	timeKeepers.commitLatency[id] = observedTime - timeKeepers.transactions[id].ProposedTime
+	timeKeepers.totalLatency[id] = observedTime - timeKeepers.transactions[id].ProposedTime
+	timeKeepers.orderCommitLatency[id] = observedTime - timeKeepers.transactions[id].BroadcastTime
 }
 
-func (tks *TimeKeepers) getAverageCommitLatency() float64 {
+func (tks *TimeKeepers) getAverageTotalLatency() float64 {
+	// var result int64 = 0
+	// for _, cl := range tks.totalLatency {
+	// 	result += cl
+	// }
+	// return float64(result) / float64(config.TxNum) / 1e9
+	return tks.getAverageLatencyFromSlice(&tks.totalLatency)
+}
+
+func (tks *TimeKeepers) getAverageEndorseLatency() float64 {
+	// var result int64 = 0
+	// for _, cl := range tks.endorseLatency {
+	// 	result += cl
+	// }
+	// return float64(result) / float64(config.TxNum) / 1e9
+	return tks.getAverageLatencyFromSlice(&tks.endorseLatency)
+}
+
+func (tks *TimeKeepers) getAverageOrderCommitLatency() float64 {
+	// var result int64 = 0
+	// for _, cl := range tks.orderCommitLatency {
+	// 	result += cl
+	// }
+	// return float64(result) / float64(config.TxNum) / 1e9
+	return tks.getAverageLatencyFromSlice(&tks.orderCommitLatency)
+}
+
+func (tks *TimeKeepers) getAverageLatencyFromSlice(slice *[]int64) float64 {
 	var result int64 = 0
-	for _, cl := range tks.commitLatency {
+	for _, cl := range *slice {
 		result += cl
 	}
 	return float64(result) / float64(config.TxNum) / 1e9
@@ -113,8 +146,8 @@ func (tks *TimeKeepers) getCommitLatencyOfPercentile(p int) float64 {
 }
 
 func (tks *TimeKeepers) sortCommitLatency() {
-	tks.commitLatencySorted = make([]int64, len(tks.commitLatency))
-	copy(tks.commitLatencySorted, tks.commitLatency)
+	tks.commitLatencySorted = make([]int64, len(tks.totalLatency))
+	copy(tks.commitLatencySorted, tks.totalLatency)
 	sort.Slice(
 		tks.commitLatencySorted,
 		func(i, j int) bool {

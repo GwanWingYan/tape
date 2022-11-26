@@ -177,7 +177,9 @@ func WaitObserverEnd(startTime time.Time, printWG *sync.WaitGroup) {
 		reportCh <- fmt.Sprintf("TPS: %.3f", float64(config.TxNum)*1e9/float64(duration.Nanoseconds()))
 		reportCh <- fmt.Sprintf("Effective TPS: %.3f", float64(int32(config.TxNum)-Metric.Abort)*1e9/float64(duration.Nanoseconds()))
 		reportCh <- fmt.Sprintf("Abort Rate: %.3f%%", float64(Metric.Abort)/float64(config.TxNum)*100)
-		reportCh <- fmt.Sprintf("Average Commit Latency: %.3fs", timeKeepers.getAverageCommitLatency())
+		reportCh <- fmt.Sprintf("Average Commit Latency: %.3fs", timeKeepers.getAverageTotalLatency())
+		reportCh <- fmt.Sprintf("Average Endorse Latency: %.3fs", timeKeepers.getAverageEndorseLatency())
+		reportCh <- fmt.Sprintf("Average Order&Commit Latency: %.3fs", timeKeepers.getAverageOrderCommitLatency())
 
 		percentiles := []int{50, 55, 60, 65, 70, 75, 80, 85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100}
 		for _, i := range percentiles {
